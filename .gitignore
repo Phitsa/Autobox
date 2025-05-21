@@ -1,0 +1,42 @@
+# Ignore do Maven
+/backend/target/
+**/target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.swp
+
+# Ambiente do sistema
+.env
+.env.*
+
+# Arquivos do OS
+*.bak
+*.old
+
+# Build do React
+/frontend/build/
+frontend/node_modules/
+
+# Ignorar arquivos de dependência do npm/yarn
+**/node_modules/
+
+# Arquivos Docker temporários (opcional)
+*.pid
+
+# Outros
+backend/.mvn/wrapper/maven-wrapper.jar
