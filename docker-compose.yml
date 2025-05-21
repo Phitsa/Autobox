@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gs-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gs_db
+      MYSQL_USER: gs_user
+      MYSQL_PASSWORD: gs_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+    container_name: gs-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gs_db
+      SPRING_DATASOURCE_USERNAME: gs_user
+      SPRING_DATASOURCE_PASSWORD: gs_pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - gs-net
+
+volumes:
+  mysql_data:
+
+networks:
+  gs-net:

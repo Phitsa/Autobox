@@ -1,0 +1,26 @@
+# Etapa de build
+FROM maven:3.9.5-eclipse-temurin-17 AS build
+WORKDIR /app
+
+# Copiar apenas o pom.xml e baixar dependências separadamente (cache melhor)
+COPY pom.xml .
+RUN mvn dependency:go-offline
+
+# Agora sim, copiar o restante do código
+COPY src ./src
+
+# Fazer o build do projeto (sem testes)
+RUN mvn clean package -DskipTests
+
+# Etapa de execução
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+
+# Copiar o JAR gerado na etapa de build
+COPY --from=build /app/target/*.jar app.jar
+
+# Expõe a porta 8080 (padrão do Spring Boot)
+EXPOSE 8080
+
+# Comando de inicialização
+ENTRYPOINT ["java", "-jar", "app.jar"]
