@@ -7,9 +7,9 @@ O **BoxPro** é um sistema web desenvolvido como projeto acadêmico para gerenci
 ### 👥 Equipe de Desenvolvimento
 
 - **Adriel Torres Alves de Alencar**
-- **Anthony Felipe Fonseca de França** (Cliente)
+- **Anthony Felipe Fonseca de França**
 - **Aldenor Bezerra de Almeida**
-- **Pedro Gabriel da Silva Nolasco** (Desenvolvedor)
+- **Pedro Gabriel da Silva Nolasco**
 
 ## 🎯 Objetivo
 
@@ -40,7 +40,7 @@ Desenvolver uma plataforma que permita:
 ## 📁 Estrutura do Projeto
 
 ```
-gs-spring-boot-docker/
+Autobox/
 ├── backend/                 # API Spring Boot
 │   ├── dockerfile          # Configuração Docker do backend
 │   ├── pom.xml            # Dependências Maven
@@ -57,14 +57,6 @@ gs-spring-boot-docker/
 ```
 
 ## ⚙️ Funcionalidades Principais
-
-### Para Clientes
-- ✅ Login seguro com e-mail e senha
-- 📅 Agendamento de serviços com seleção de data e horário
-- 🔄 Cancelamento e remarcação de agendamentos
-- 🚗 Cadastro de veículos (modelo, ano, placa)
-- 📊 Acompanhamento do status do serviço
-- 📋 Visualização de lista de serviços disponíveis
 
 ### Para Administradores
 - 👥 Gerenciamento completo de agendamentos
@@ -87,7 +79,7 @@ gs-spring-boot-docker/
 1. Clone o repositório:
 ```bash
 git clone [URL_DO_REPOSITORIO]
-cd gs-spring-boot-docker
+cd Autobox
 ```
 
 2. Inicie os containers:
@@ -148,4 +140,4 @@ Este é um projeto acadêmico desenvolvido para fins educacionais.
 
 ---
 
-**Observação**: Este projeto foi desenvolvido como trabalho acadêmico e está baseado na análise do sistema atual "Cera" utilizado pela Autobox.
+**Observação**: Este projeto foi desenvolvido como trabalho acadêmico e está baseado na análise do sistema atual "sera" utilizado pela Autobox.
