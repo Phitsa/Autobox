@@ -7,8 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface HistoricoAgendamentoRepository extends JpaRepository<HistoricoAgendamento, Integer> {
@@ -53,4 +55,9 @@ public interface HistoricoAgendamentoRepository extends JpaRepository<HistoricoA
     
     // Auditoria: buscar todas as ações de um usuário em um dia
     @Query("SELECT h FROM HistoricoAgendamento h " +
-           "WHERE h.
+           "WHERE h.usuario.id = :usuarioId " +
+           "AND DATE(h.dataAcao) = :data " +
+           "ORDER BY h.dataAcao DESC")
+    List<HistoricoAgendamento> findAcoesPorUsuarioNoDia(@Param("usuarioId") Integer usuarioId,
+                                                        @Param("data") LocalDate data);
+}

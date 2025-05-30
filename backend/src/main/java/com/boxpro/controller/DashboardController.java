@@ -17,9 +17,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+// @PreAuthorize("hasRole('ADMINISTRADOR')")
 @Tag(name = "Dashboard", description = "Estatísticas e relatórios do sistema")
-@SecurityRequirement(name = "bearer-jwt")
+// @SecurityRequirement(name = "bearer-jwt")
 public class DashboardController {
 
     private final DashboardService dashboardService;

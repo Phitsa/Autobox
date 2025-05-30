@@ -57,6 +57,11 @@ public class SecurityConfig {
             
             // Configurar autorização de requisições
             .authorizeHttpRequests(auth -> auth
+
+                // ⬇ Novo endpoint de teste com JWT
+    .requestMatchers("/api/test-jwt").authenticated()
+
+    
                 // Endpoints públicos
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
