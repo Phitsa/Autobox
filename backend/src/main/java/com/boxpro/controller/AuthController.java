@@ -5,6 +5,15 @@ import com.boxpro.dto.request.RegisterRequest;
 import com.boxpro.dto.response.AuthResponse;
 import com.boxpro.entity.Usuario;
 import com.boxpro.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +28,7 @@ import java.util.logging.Logger;
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
+@Tag(name = "Autenticação", description = "APIs para autenticação e autorização de usuários")
 public class AuthController {
 
     private static final Logger log = Logger.getLogger(AuthController.class.getName());
@@ -26,8 +36,37 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @Operation(
+        summary = "Fazer login",
+        description = "Autentica um usuário e retorna um token JWT para acesso aos endpoints protegidos"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Login realizado com sucesso",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = AuthResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"token\":\"eyJhbGciOiJIUzUxMiJ9...\",\"tipo\":\"Bearer\",\"id\":1,\"nome\":\"Administrador\",\"email\":\"admin@boxpro.com\",\"tipoUsuario\":\"ADMIN\"}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401", 
+            description = "Credenciais inválidas",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = "{\"message\":\"Email ou senha inválidos\",\"status\":\"error\"}"
+                )
+            )
+        )
+    })
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(
+        @Parameter(description = "Dados de login do usuário", required = true)
+        @Valid @RequestBody LoginRequest loginRequest) {
         try {
             log.info("Tentativa de login para email: " + loginRequest.getEmail());
             AuthResponse response = authService.login(loginRequest);
@@ -48,8 +87,34 @@ public class AuthController {
         }
     }
 
+    @Operation(
+        summary = "Registrar novo usuário",
+        description = "Cria um novo usuário no sistema e retorna um token JWT"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201", 
+            description = "Usuário registrado com sucesso",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = AuthResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Dados inválidos ou email já em uso",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = "{\"message\":\"Email já está em uso!\",\"status\":\"error\"}"
+                )
+            )
+        )
+    })
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(
+        @Parameter(description = "Dados para registro do usuário", required = true)
+        @Valid @RequestBody RegisterRequest registerRequest) {
         try {
             log.info("Tentativa de registro para email: " + registerRequest.getEmail());
             AuthResponse response = authService.register(registerRequest);
@@ -70,13 +135,39 @@ public class AuthController {
         }
     }
 
+    @Operation(
+        summary = "Obter dados do usuário logado",
+        description = "Retorna os dados do usuário autenticado"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Dados do usuário retornados com sucesso",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = "{\"id\":1,\"nome\":\"Administrador\",\"email\":\"admin@boxpro.com\",\"telefone\":\"(11) 99999-9999\",\"tipoUsuario\":\"ADMIN\",\"ativo\":true}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401", 
+            description = "Token inválido ou não fornecido",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = "{\"message\":\"Usuário não autenticado\",\"status\":\"error\"}"
+                )
+            )
+        )
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser() {
         try {
             Usuario usuario = authService.getCurrentUser();
             log.info("Dados do usuário solicitados: " + usuario.getEmail());
             
-            // Criar resposta sem dados sensíveis
             Map<String, Object> response = new HashMap<>();
             response.put("id", usuario.getId());
             response.put("nome", usuario.getNome());
@@ -104,9 +195,24 @@ public class AuthController {
         }
     }
 
+    @Operation(
+        summary = "Fazer logout",
+        description = "Endpoint para logout (com JWT stateless, remove o token no frontend)"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Logout realizado com sucesso",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = "{\"message\":\"Logout realizado com sucesso\",\"status\":\"success\"}"
+                )
+            )
+        )
+    })
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout() {
-        // Com JWT stateless, o logout é feito no frontend removendo o token
         log.info("Logout solicitado");
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logout realizado com sucesso");
@@ -115,6 +221,11 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+        summary = "Validar token JWT",
+        description = "Verifica se o token JWT fornecido é válido"
+    )
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/validate-token")
     public ResponseEntity<Map<String, Object>> validateToken() {
         try {
@@ -135,11 +246,15 @@ public class AuthController {
         }
     }
 
+    @Operation(
+        summary = "Renovar token JWT",
+        description = "Gera um novo token JWT para o usuário autenticado"
+    )
+    @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken() {
         try {
             Usuario usuario = authService.getCurrentUser();
-            // Gerar novo token para o usuário atual
             AuthResponse response = authService.refreshToken(usuario);
             log.info("Token renovado para usuário: " + usuario.getEmail());
             return ResponseEntity.ok(response);
@@ -152,6 +267,22 @@ public class AuthController {
         }
     }
 
+    @Operation(
+        summary = "Status da API",
+        description = "Retorna informações sobre o status e endpoints disponíveis da API"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Status da API retornado com sucesso",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = "{\"service\":\"BoxPro Authentication API\",\"status\":\"running\",\"version\":\"1.0.0\"}"
+                )
+            )
+        )
+    })
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getAuthStatus() {
         Map<String, Object> response = new HashMap<>();
