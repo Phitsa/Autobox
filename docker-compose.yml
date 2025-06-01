@@ -1,13 +1,13 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: gs-mysql
+    container_name: boxpro-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: gs_db
-      MYSQL_USER: gs_user
-      MYSQL_PASSWORD: gs_pass
+      MYSQL_DATABASE: boxpro_db
+      MYSQL_USER: boxpro_user
+      MYSQL_PASSWORD: boxpro_pass
     ports:
       - "3306:3306"
     volumes:
@@ -20,12 +20,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - gs-net
+      - boxpro-net
 
   backend:
     build:
       context: ./backend
-    container_name: gs-backend
+    container_name: boxpro-backend
     restart: always
     ports:
       - "8080:8080"
@@ -33,17 +33,35 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gs_db
-      SPRING_DATASOURCE_USERNAME: gs_user
-      SPRING_DATASOURCE_PASSWORD: gs_pass
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop  # Para criar as tabelas na primeira execução
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/boxpro_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      
+      # JPA Configuration
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+      
+      # Server Configuration
+      SERVER_PORT: 8080
+      SERVER_SERVLET_CONTEXT_PATH: /api
+      
+      # JWT Configuration
+      APP_JWT_SECRET: boxProSecretKey2024!@#$%^&*()_+{}[]|:;<>?,.
+      APP_JWT_EXPIRATION: 86400000
+      
+      # Logging
+      LOGGING_LEVEL_COM_BOXPRO: DEBUG
+      
     networks:
-      - gs-net
+      - boxpro-net
 
 volumes:
   mysql_data:
 
 networks:
-  gs-net:
+  boxpro-net:
     driver: bridge
