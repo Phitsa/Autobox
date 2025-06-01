@@ -11,8 +11,8 @@ const HeroSection = () => {
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-              Auto Box Car<br/>
-              <span className="text-yellow-300">Lava Rápido</span>
+              Auto Box<br/>
+              <span className="text-yellow-300">Estética Automotiva</span>
             </h1>
             <p className="text-white/90 text-lg mb-8 max-w-lg mx-auto md:mx-0">
               Seu carro merece o melhor tratamento! Agende seu horário agora.
