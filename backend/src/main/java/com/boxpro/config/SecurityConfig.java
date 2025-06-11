@@ -58,21 +58,40 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
+                // Endpoints de autenticação públicos
                 .requestMatchers("/auth/login").permitAll()
                 .requestMatchers("/auth/register").permitAll()
                 .requestMatchers("/auth/status").permitAll()
                 .requestMatchers("/auth/logout").permitAll()
+                
+                // Endpoints públicos
                 .requestMatchers("/test/public").permitAll()
                 .requestMatchers("/public/**").permitAll()
+                
+                // Documentação da API
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-resources/**").permitAll()
                 .requestMatchers("/webjars/**").permitAll()
+                
+                // Monitoramento
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/info").permitAll()
+                
+                // H2 Console (apenas para desenvolvimento)
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/clientes/**").permitAll()
+                
+                // Endpoints de clientes - podem ser públicos ou protegidos conforme necessário
+                .requestMatchers("/api/clientes/**").permitAll()
+                
+                // Endpoints de funcionários - apenas para funcionários autenticados
+                .requestMatchers("/api/funcionarios/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                
+                // Endpoints administrativos - apenas para admins
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                
+                // Todos os outros endpoints requerem autenticação
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

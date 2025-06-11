@@ -18,7 +18,7 @@ public class SwaggerConfig {
         return new OpenAPI()
             .info(new Info()
                 .title("BoxPro API")
-                .description("Sistema de Agendamento BoxPro - API REST com autenticação JWT")
+                .description("Sistema de Agendamento BoxPro - API REST com autenticação JWT para funcionários")
                 .version("1.0.0")
                 .contact(new Contact()
                     .name("BoxPro Team")
@@ -33,6 +33,6 @@ public class SwaggerConfig {
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
                         .bearerFormat("JWT")
-                        .description("Token JWT para autenticação. Formato: Bearer {token}")));
+                        .description("Token JWT para autenticação de funcionários. Formato: Bearer {token}")));
     }
 }

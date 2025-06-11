@@ -1,6 +1,6 @@
 package com.boxpro.dto.request;
 
-import com.boxpro.entity.enums.TipoUsuario;
+import com.boxpro.entity.Funcionario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,19 +24,19 @@ public class RegisterRequest {
     
     private String cpf;
     
-    @NotNull(message = "Tipo de usuário é obrigatório")
-    private TipoUsuario tipoUsuario;
+    @NotNull(message = "Tipo de funcionário é obrigatório")
+    private Funcionario.TipoFuncionario tipoFuncionario;
 
     // Constructors
     public RegisterRequest() {}
 
-    public RegisterRequest(String nome, String email, String senha, String telefone, String cpf, TipoUsuario tipoUsuario) {
+    public RegisterRequest(String nome, String email, String senha, String telefone, String cpf, Funcionario.TipoFuncionario tipoFuncionario) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.telefone = telefone;
         this.cpf = cpf;
-        this.tipoUsuario = tipoUsuario;
+        this.tipoFuncionario = tipoFuncionario;
     }
 
     // Getters and Setters
@@ -55,6 +55,6 @@ public class RegisterRequest {
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
 
-    public TipoUsuario getTipoUsuario() { return tipoUsuario; }
-    public void setTipoUsuario(TipoUsuario tipoUsuario) { this.tipoUsuario = tipoUsuario; }
+    public Funcionario.TipoFuncionario getTipoFuncionario() { return tipoFuncionario; }
+    public void setTipoFuncionario(Funcionario.TipoFuncionario tipoFuncionario) { this.tipoFuncionario = tipoFuncionario; }
 }

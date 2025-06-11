@@ -3,8 +3,8 @@ package com.boxpro.service;
 import com.boxpro.dto.request.LoginRequest;
 import com.boxpro.dto.request.RegisterRequest;
 import com.boxpro.dto.response.AuthResponse;
-import com.boxpro.entity.Usuario;
-import com.boxpro.repository.UsuarioRepository;
+import com.boxpro.entity.Funcionario;
+import com.boxpro.repository.FuncionarioRepository;
 import com.boxpro.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +22,7 @@ public class AuthService {
     private AuthenticationManager authenticationManager;
     
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private FuncionarioRepository funcionarioRepository;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -42,35 +42,39 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateToken(authentication);
 
-        Usuario usuario = (Usuario) authentication.getPrincipal();
+        Funcionario funcionario = (Funcionario) authentication.getPrincipal();
+        
+        // Registrar login
+        funcionario.registrarLogin();
+        funcionarioRepository.save(funcionario);
 
-        return new AuthResponse(jwt, usuario.getId(), usuario.getNome(), 
-                               usuario.getEmail(), usuario.getTipoUsuario());
+        return new AuthResponse(jwt, funcionario.getId(), funcionario.getNome(), 
+                               funcionario.getEmail(), funcionario.getTipoFuncionario());
     }
 
     @Transactional
     public AuthResponse register(RegisterRequest registerRequest) {
         // Verificar se email já existe
-        if (usuarioRepository.existsByEmail(registerRequest.getEmail())) {
+        if (funcionarioRepository.existsByEmail(registerRequest.getEmail())) {
             throw new RuntimeException("Email já está em uso!");
         }
 
         // Verificar se CPF já existe (se fornecido)
-        if (registerRequest.getCpf() != null && usuarioRepository.existsByCpf(registerRequest.getCpf())) {
+        if (registerRequest.getCpf() != null && funcionarioRepository.existsByCpf(registerRequest.getCpf())) {
             throw new RuntimeException("CPF já está em uso!");
         }
 
-        // Criar usuário
-        Usuario usuario = new Usuario();
-        usuario.setNome(registerRequest.getNome());
-        usuario.setEmail(registerRequest.getEmail());
-        usuario.setSenha(passwordEncoder.encode(registerRequest.getSenha()));
-        usuario.setTelefone(registerRequest.getTelefone());
-        usuario.setCpf(registerRequest.getCpf());
-        usuario.setTipoUsuario(registerRequest.getTipoUsuario());
-        usuario.setAtivo(true);
+        // Criar funcionário
+        Funcionario funcionario = new Funcionario();
+        funcionario.setNome(registerRequest.getNome());
+        funcionario.setEmail(registerRequest.getEmail());
+        funcionario.setSenha(passwordEncoder.encode(registerRequest.getSenha()));
+        funcionario.setTelefone(registerRequest.getTelefone());
+        funcionario.setCpf(registerRequest.getCpf());
+        funcionario.setTipoFuncionario(registerRequest.getTipoFuncionario());
+        funcionario.setAtivo(true);
 
-        usuario = usuarioRepository.save(usuario);
+        funcionario = funcionarioRepository.save(funcionario);
 
         // Autenticar automaticamente após registro
         Authentication authentication = authenticationManager.authenticate(
@@ -82,26 +86,26 @@ public class AuthService {
 
         String jwt = jwtUtil.generateToken(authentication);
 
-        return new AuthResponse(jwt, usuario.getId(), usuario.getNome(), 
-                               usuario.getEmail(), usuario.getTipoUsuario());
+        return new AuthResponse(jwt, funcionario.getId(), funcionario.getNome(), 
+                               funcionario.getEmail(), funcionario.getTipoFuncionario());
     }
 
-    public Usuario getCurrentUser() {
+    public Funcionario getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof Usuario) {
-            return (Usuario) authentication.getPrincipal();
+        if (authentication != null && authentication.getPrincipal() instanceof Funcionario) {
+            return (Funcionario) authentication.getPrincipal();
         }
-        throw new RuntimeException("Usuário não autenticado");
+        throw new RuntimeException("Funcionário não autenticado");
     }
 
-    public AuthResponse refreshToken(Usuario usuario) {
+    public AuthResponse refreshToken(Funcionario funcionario) {
         // Criar nova autenticação para gerar novo token
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-            usuario, null, usuario.getAuthorities());
+            funcionario, null, funcionario.getAuthorities());
         
         String newJwt = jwtUtil.generateToken(authentication);
         
-        return new AuthResponse(newJwt, usuario.getId(), usuario.getNome(), 
-                               usuario.getEmail(), usuario.getTipoUsuario());
+        return new AuthResponse(newJwt, funcionario.getId(), funcionario.getNome(), 
+                               funcionario.getEmail(), funcionario.getTipoFuncionario());
     }
 }

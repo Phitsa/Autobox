@@ -1,26 +1,28 @@
-export interface User {
-  id: string;
-  nome: string;
-  email: string;
-  tipoUsuario: 'ADMIN' | 'FUNCIONARIO' | 'CLIENTE';
-}
+// types/auth.ts
 
 export interface LoginData {
   email: string;
   senha: string;
 }
 
-export interface RegisterData {
+export interface User {
+  id: number;
   nome: string;
   email: string;
-  senha: string;
-  telefone: string;
-  cpf: string;
-  tipoUsuario: 'ADMIN' | 'FUNCIONARIO' | 'CLIENTE';
+  tipoUsuario: 'ADMIN' | 'FUNCIONARIO';
 }
 
-export interface LoginRegisterModalProps {
+export interface LoginResponse {
+  token: string;
+  id: number;
+  nome: string;
+  email: string;
+  tipoUsuario: 'ADMIN' | 'FUNCIONARIO';
+  message?: string;
+}
+
+export interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess?: (userData: User) => void;
+  onLoginSuccess?: (user: LoginResponse) => void;
 }

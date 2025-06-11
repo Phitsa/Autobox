@@ -1,7 +1,7 @@
 package com.boxpro.service;
 
-import com.boxpro.entity.Usuario;
-import com.boxpro.repository.UsuarioRepository;
+import com.boxpro.entity.Funcionario;
+import com.boxpro.repository.FuncionarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,14 +13,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private FuncionarioRepository funcionarioRepository;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
+        Funcionario funcionario = funcionarioRepository.findByEmailAndAtivo(username, true)
+                .orElseThrow(() -> new UsernameNotFoundException("Funcionário não encontrado: " + username));
 
-        return usuario;
+        if (funcionario.getBloqueado()) {
+            throw new UsernameNotFoundException("Funcionário bloqueado: " + username);
+        }
+
+        return funcionario;
     }
 }
