@@ -18,13 +18,7 @@ public class UsuarioService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    @PostConstruct
-    public void init() {
-        System.out.println("✅ UsuarioService carregado!");
-    }
-
     public Usuario criarCliente(Usuario cliente) {
-        cliente.setTipoUsuario(TipoUsuario.valueOf("CLIENTE"));
         cliente.setAtivo(true);
         return usuarioRepository.save(cliente);
     }
@@ -32,6 +26,20 @@ public class UsuarioService {
     public List<Usuario> listarClientes() {
         return usuarioRepository.findAll();
     }
+
+    public Optional<Usuario> alterarCliente(Usuario cliente) {
+        if (cliente.getId() == null) {
+            return Optional.empty();
+        }
+
+        Optional<Usuario> existente = usuarioRepository.findById(cliente.getId());
+        if (existente.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(usuarioRepository.save(cliente));
+    }
+
 
     public Optional<Usuario> buscarPorEmail(String email) {
         return usuarioRepository.findByEmail(email);

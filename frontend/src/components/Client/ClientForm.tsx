@@ -11,7 +11,6 @@ interface ClienteFormData {
   senha: string;
   telefone: string;
   cpf: string;
-  dataCriacao: string;
 }
 
 interface ClienteFormProps {
@@ -26,7 +25,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
     senha: '',
     telefone: '',
     cpf: '',
-    dataCriacao: new Date().toISOString().split('T')[0]
   });
 
   const [errors, setErrors] = useState<Partial<ClienteFormData>>({});
@@ -99,7 +97,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
             senha: '',
             telefone: '',
             cpf: '',
-            dataCriacao: new Date().toISOString().split('T')[0]
           });
 
           toast({
@@ -192,18 +189,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
           className={errors.cpf ? 'border-destructive' : ''}
         />
         {errors.cpf && <p className="text-sm text-destructive">{errors.cpf}</p>}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dataCriacao">Data de Criação</Label>
-        <Input
-          id="dataCriacao"
-          type="date"
-          value={formData.dataCriacao}
-          onChange={(e) => handleInputChange('dataCriacao', e.target.value)}
-          className="bg-muted"
-          readOnly
-        />
       </div>
 
       <div className="flex gap-3 pt-4">
