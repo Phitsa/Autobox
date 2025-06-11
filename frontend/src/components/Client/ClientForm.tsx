@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 interface ClienteFormData {
   nome: string;
   email: string;
-  senha: string;
   telefone: string;
   cpf: string;
 }
@@ -22,7 +21,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
   const [formData, setFormData] = useState<ClienteFormData>({
     nome: '',
     email: '',
-    senha: '',
     telefone: '',
     cpf: '',
   });
@@ -49,12 +47,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
       newErrors.email = 'Email é obrigatório';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email inválido';
-    }
-
-    if (!formData.senha.trim()) {
-      newErrors.senha = 'Senha é obrigatória';
-    } else if (formData.senha.length < 6) {
-      newErrors.senha = 'Senha deve ter pelo menos 6 caracteres';
     }
 
     if (!formData.telefone.trim()) {
@@ -94,7 +86,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
           setFormData({
             nome: '',
             email: '',
-            senha: '',
             telefone: '',
             cpf: '',
           });
@@ -150,19 +141,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
           className={errors.email ? 'border-destructive' : ''}
         />
         {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="senha">Senha *</Label>
-        <Input
-          id="senha"
-          type="password"
-          value={formData.senha}
-          onChange={(e) => handleInputChange('senha', e.target.value)}
-          placeholder="Digite a senha (mín. 6 caracteres)"
-          className={errors.senha ? 'border-destructive' : ''}
-        />
-        {errors.senha && <p className="text-sm text-destructive">{errors.senha}</p>}
       </div>
 
       <div className="space-y-2">

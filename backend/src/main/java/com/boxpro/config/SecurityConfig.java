@@ -83,7 +83,7 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 
                 // Endpoints de clientes - podem ser públicos ou protegidos conforme necessário
-                .requestMatchers("/api/clientes/**").permitAll()
+                .requestMatchers("/clientes/**").permitAll()
                 
                 // Endpoints de funcionários - apenas para funcionários autenticados
                 .requestMatchers("/api/funcionarios/**").hasAnyRole("ADMIN", "FUNCIONARIO")

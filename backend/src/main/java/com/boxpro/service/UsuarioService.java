@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.boxpro.entity.Usuario;
-import com.boxpro.entity.enums.TipoUsuario;
 import com.boxpro.repository.UsuarioRepository;
-
-import jakarta.annotation.PostConstruct;
 
 @Service
 public class UsuarioService {
@@ -39,7 +36,6 @@ public class UsuarioService {
 
         return Optional.of(usuarioRepository.save(cliente));
     }
-
 
     public Optional<Usuario> buscarPorEmail(String email) {
         return usuarioRepository.findByEmail(email);
