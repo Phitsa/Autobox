@@ -8,10 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 interface ClienteFormData {
   nome: string;
   email: string;
-  senha: string;
   telefone: string;
   cpf: string;
-  dataCriacao: string;
 }
 
 interface ClienteFormProps {
@@ -23,10 +21,8 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
   const [formData, setFormData] = useState<ClienteFormData>({
     nome: '',
     email: '',
-    senha: '',
     telefone: '',
     cpf: '',
-    dataCriacao: new Date().toISOString().split('T')[0]
   });
 
   const [errors, setErrors] = useState<Partial<ClienteFormData>>({});
@@ -51,12 +47,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
       newErrors.email = 'Email é obrigatório';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email inválido';
-    }
-
-    if (!formData.senha.trim()) {
-      newErrors.senha = 'Senha é obrigatória';
-    } else if (formData.senha.length < 6) {
-      newErrors.senha = 'Senha deve ter pelo menos 6 caracteres';
     }
 
     if (!formData.telefone.trim()) {
@@ -96,10 +86,8 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
           setFormData({
             nome: '',
             email: '',
-            senha: '',
             telefone: '',
             cpf: '',
-            dataCriacao: new Date().toISOString().split('T')[0]
           });
 
           toast({
@@ -156,19 +144,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="senha">Senha *</Label>
-        <Input
-          id="senha"
-          type="password"
-          value={formData.senha}
-          onChange={(e) => handleInputChange('senha', e.target.value)}
-          placeholder="Digite a senha (mín. 6 caracteres)"
-          className={errors.senha ? 'border-destructive' : ''}
-        />
-        {errors.senha && <p className="text-sm text-destructive">{errors.senha}</p>}
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="telefone">Telefone *</Label>
         <Input
           id="telefone"
@@ -192,18 +167,6 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
           className={errors.cpf ? 'border-destructive' : ''}
         />
         {errors.cpf && <p className="text-sm text-destructive">{errors.cpf}</p>}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dataCriacao">Data de Criação</Label>
-        <Input
-          id="dataCriacao"
-          type="date"
-          value={formData.dataCriacao}
-          onChange={(e) => handleInputChange('dataCriacao', e.target.value)}
-          className="bg-muted"
-          readOnly
-        />
       </div>
 
       <div className="flex gap-3 pt-4">
