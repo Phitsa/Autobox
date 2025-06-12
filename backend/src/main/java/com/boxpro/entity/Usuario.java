@@ -9,7 +9,7 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, length = 100)
     private String nome;
@@ -23,9 +23,6 @@ public class Usuario {
     @Column(length = 14)
     private String cpf;
 
-    @Column(nullable = false)
-    private Boolean ativo = true;
-
     @Column(name = "data_criacao", nullable = false)
     private LocalDateTime dataCriacao;
 
@@ -35,13 +32,12 @@ public class Usuario {
     // Constructors
     public Usuario() {}
 
-    public Usuario(Integer id, String nome, String email, String telefone, String cpf, Boolean ativo, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+    public Usuario(Long id, String nome, String email, String telefone, String cpf, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.telefone = telefone;
         this.cpf = cpf;
-        this.ativo = ativo;
         this.dataCriacao = dataCriacao;
         this.dataAtualizacao = dataAtualizacao;
     }
@@ -58,8 +54,8 @@ public class Usuario {
     }
 
     // Getters and Setters
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
@@ -72,9 +68,6 @@ public class Usuario {
 
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
-
-    public Boolean getAtivo() { return ativo; }
-    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
