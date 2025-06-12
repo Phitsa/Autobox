@@ -85,6 +85,9 @@ public class SecurityConfig {
                 // Endpoints de clientes - podem ser públicos ou protegidos conforme necessário
                 .requestMatchers("/clientes/**").permitAll()
                 
+                // Endpoints de veículos
+                .requestMatchers("/veiculos/**").permitAll()
+                
                 // Endpoints de funcionários - apenas para funcionários autenticados
                 .requestMatchers("/api/funcionarios/**").hasAnyRole("ADMIN", "FUNCIONARIO")
                 

@@ -47,21 +47,41 @@ const Clientes = () => {
     buscarClientes();
   }, []);
 
+  const handleAtualizarCliente = async (clienteAtualizado: TypeCliente) => {
+    try {
+      const response = await axios.put<TypeCliente>(
+        `http://localhost:8080/api/clientes/editar/${clienteAtualizado.id}`,
+        clienteAtualizado
+      );
+
+      // Atualiza o cliente na lista
+      setClientes(prev =>
+        prev.map(c => (c.id === response.data.id ? response.data : c))
+      );
+
+      setDialogOpen(false);
+      setEditingCliente(null);
+    } catch (error) {
+      console.error("Erro ao atualizar cliente:", error);
+    }
+  };
+
   if (loading) return <p>Carregando...</p>;
   if (erro) return <p className="text-red-600">{erro}</p>;
 
 
-  const handleNovoCliente = (novoCliente: Omit<TypeCliente, 'id' | 'dataCriacao'>) => {
-    const cliente: TypeCliente = {
-      ...novoCliente,
-      id: clientes.length + 1,
-      dataCriacao: new Date().toISOString().split('T')[0]
-    };
-    setClientes([...clientes, cliente]);
-    setDialogOpen(false);
+  const handleNovoCliente = async (novoCliente: Omit<TypeCliente, 'id' | 'dataCriacao'>) => {
+    try {
+      const response = await axios.post<TypeCliente>("http://localhost:8080/api/clientes", novoCliente);
+      setClientes(prev => [...prev, response.data]);
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao criar cliente:", error);
+    }
   };
 
   const handleEditarCliente = (cliente: TypeCliente) => {
+  console.log('Cliente selecionado para editar:', cliente);
   setEditingCliente(cliente);
   setDialogOpen(true);
   };
@@ -123,8 +143,8 @@ const Clientes = () => {
                 </DialogTitle>
               </DialogHeader>
               <ClienteForm 
-                onSubmit={handleNovoCliente} 
-                initialData={editingCliente}
+                onSubmit={editingCliente ? handleAtualizarCliente : handleNovoCliente}
+                clienteEditando={editingCliente}
               />
             </DialogContent>
           </Dialog>

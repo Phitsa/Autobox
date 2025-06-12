@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { TypeCliente } from '@/types/TypeCliente';
 
 interface ClienteFormData {
   nome: string;
@@ -13,10 +14,12 @@ interface ClienteFormData {
 }
 
 interface ClienteFormProps {
-  onSubmit: (cliente: ClienteFormData) => void;
+  onSubmit: (cliente: ClienteFormData, id?: number) => void;
+  clienteEditando?: TypeCliente | null;
 }
 
-const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
+
+const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit, clienteEditando }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<ClienteFormData>({
     nome: '',
@@ -65,55 +68,81 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (validateForm()) {
       setIsLoading(true);
-      
+      const url = clienteEditando
+        ? `http://localhost:8080/api/clientes/editar/${clienteEditando.id}`
+        : 'http://localhost:8080/api/clientes';
+      console.log(url)
+      const method = clienteEditando ? 'PUT' : 'POST';
+
       try {
-        const response = await fetch('http://localhost:8080/api/clientes', {
-          method: 'POST',
+        const response = await fetch(url, {
+          method,
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(formData),
         });
 
+        const cliente = await response.json();
+
         if (response.ok) {
-          const novoCliente = await response.json();
-          onSubmit(novoCliente);
-          
-          // Limpar formulário
-          setFormData({
-            nome: '',
-            email: '',
-            telefone: '',
-            cpf: '',
-          });
+          onSubmit(cliente, clienteEditando?.id);
 
           toast({
-            title: "Sucesso!",
-            description: "Cliente adicionado com sucesso.",
+            title: 'Sucesso!',
+            description: clienteEditando
+              ? 'Cliente atualizado com sucesso.'
+              : 'Cliente adicionado com sucesso.',
           });
+
+          if (!clienteEditando) {
+            setFormData({
+              nome: '',
+              email: '',
+              telefone: '',
+              cpf: '',
+            });
+          }
         } else {
-          const errorData = await response.json();
           toast({
-            title: "Erro",
-            description: errorData.message || "Erro ao adicionar cliente.",
-            variant: "destructive",
+            title: 'Erro',
+            description: cliente.message || 'Erro ao salvar cliente.',
+            variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Erro ao enviar dados:', error);
         toast({
-          title: "Erro",
-          description: "Erro de conexão com o servidor.",
-          variant: "destructive",
+          title: 'Erro',
+          description: 'Erro de conexão com o servidor.',
+          variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
       }
     }
   };
+
+
+  useEffect(() => {
+    if (clienteEditando) {
+      setFormData({
+        nome: clienteEditando.nome,
+        email: clienteEditando.email,
+        telefone: clienteEditando.telefone,
+        cpf: clienteEditando.cpf,
+      });
+    } else {
+      setFormData({
+        nome: '',
+        email: '',
+        telefone: '',
+        cpf: '',
+      });
+    }
+  }, [clienteEditando]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -171,7 +200,11 @@ const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit }) => {
 
       <div className="flex gap-3 pt-4">
         <Button type="submit" className="flex-1" disabled={isLoading}>
-          {isLoading ? 'Salvando...' : 'Adicionar Cliente'}
+          {isLoading
+            ? 'Salvando...'
+            : clienteEditando
+            ? 'Salvar Alterações'
+            : 'Adicionar Cliente'}
         </Button>
       </div>
     </form>
