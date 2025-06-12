@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+import com.boxpro.entity.enums.TipoFuncionario;
+
 @Entity
 @Table(name = "funcionarios")
 public class Funcionario implements UserDetails {
@@ -172,8 +174,4 @@ public class Funcionario implements UserDetails {
         return ativo;
     }
 
-    // Enum para tipo de funcionário
-    public enum TipoFuncionario {
-        ADMIN, FUNCIONARIO
-    }
 }

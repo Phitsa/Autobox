@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import com.boxpro.entity.enums.TipoFuncionario;
+
 public class RegisterRequest {
     
     @NotBlank(message = "Nome é obrigatório")
@@ -25,12 +27,12 @@ public class RegisterRequest {
     private String cpf;
     
     @NotNull(message = "Tipo de funcionário é obrigatório")
-    private Funcionario.TipoFuncionario tipoFuncionario;
+    private TipoFuncionario tipoFuncionario;
 
     // Constructors
     public RegisterRequest() {}
 
-    public RegisterRequest(String nome, String email, String senha, String telefone, String cpf, Funcionario.TipoFuncionario tipoFuncionario) {
+    public RegisterRequest(String nome, String email, String senha, String telefone, String cpf, TipoFuncionario tipoFuncionario) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
@@ -55,6 +57,6 @@ public class RegisterRequest {
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
 
-    public Funcionario.TipoFuncionario getTipoFuncionario() { return tipoFuncionario; }
-    public void setTipoFuncionario(Funcionario.TipoFuncionario tipoFuncionario) { this.tipoFuncionario = tipoFuncionario; }
+    public TipoFuncionario getTipoFuncionario() { return tipoFuncionario; }
+    public void setTipoFuncionario(TipoFuncionario tipoFuncionario) { this.tipoFuncionario = tipoFuncionario; }
 }

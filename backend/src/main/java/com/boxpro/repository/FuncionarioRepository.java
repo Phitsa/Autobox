@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import com.boxpro.entity.enums.TipoFuncionario;
+
 @Repository
 public interface FuncionarioRepository extends JpaRepository<Funcionario, Integer> {
     
@@ -27,7 +29,7 @@ public interface FuncionarioRepository extends JpaRepository<Funcionario, Intege
     
     List<Funcionario> findByAtivoTrue();
     
-    List<Funcionario> findByTipoFuncionarioAndAtivoTrue(Funcionario.TipoFuncionario tipoFuncionario);
+    List<Funcionario> findByTipoFuncionarioAndAtivoTrue(TipoFuncionario tipoFuncionario);
     
     // Buscar funcionários não bloqueados
     @Query("SELECT f FROM Funcionario f WHERE f.ativo = true AND f.bloqueado = false")

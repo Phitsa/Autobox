@@ -12,6 +12,8 @@ import com.boxpro.repository.FuncionarioRepository;
 
 import jakarta.annotation.PostConstruct;
 
+import com.boxpro.entity.enums.TipoFuncionario;
+
 @Service
 public class FuncionarioService {
     
@@ -45,7 +47,7 @@ public class FuncionarioService {
         return funcionarioRepository.findFuncionariosDisponiveis();
     }
 
-    public List<Funcionario> listarPorTipo(Funcionario.TipoFuncionario tipo) {
+    public List<Funcionario> listarPorTipo(TipoFuncionario tipo) {
         return funcionarioRepository.findByTipoFuncionarioAndAtivoTrue(tipo);
     }
 

@@ -1,11 +1,10 @@
 package com.boxpro.entity;
 
-import com.boxpro.entity.enums.TipoUsuario;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "usuarios")
+@Table(name = "clientes")
 public class Usuario {
 
     @Id
@@ -36,7 +35,7 @@ public class Usuario {
     // Constructors
     public Usuario() {}
 
-    public Usuario(Integer id, String nome, String email, String senha, String telefone, String cpf, TipoUsuario tipoUsuario, Boolean ativo, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
+    public Usuario(Integer id, String nome, String email, String telefone, String cpf, Boolean ativo, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {
         this.id = id;
         this.nome = nome;
         this.email = email;

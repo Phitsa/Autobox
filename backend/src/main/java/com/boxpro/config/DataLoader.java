@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.logging.Logger;
 
+import com.boxpro.entity.enums.TipoFuncionario;
+
 @Component
 public class DataLoader implements CommandLineRunner {
 
@@ -34,7 +36,7 @@ public class DataLoader implements CommandLineRunner {
             admin.setSenha(passwordEncoder.encode("123456"));
             admin.setTelefone("(11) 99999-9999");
             admin.setCpf("000.000.000-00");
-            admin.setTipoFuncionario(Funcionario.TipoFuncionario.ADMIN);
+            admin.setTipoFuncionario(TipoFuncionario.ADMIN);
             admin.setAtivo(true);
             
             funcionarioRepository.save(admin);
@@ -49,7 +51,7 @@ public class DataLoader implements CommandLineRunner {
             funcionario.setSenha(passwordEncoder.encode("123456"));
             funcionario.setTelefone("(11) 88888-8888");
             funcionario.setCpf("111.111.111-11");
-            funcionario.setTipoFuncionario(Funcionario.TipoFuncionario.FUNCIONARIO);
+            funcionario.setTipoFuncionario(TipoFuncionario.FUNCIONARIO);
             funcionario.setAtivo(true);
             
             funcionarioRepository.save(funcionario);
