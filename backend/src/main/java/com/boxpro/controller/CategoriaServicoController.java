@@ -18,13 +18,19 @@ public class CategoriaServicoController {
     private CategoriaServicoService categoriaService;
     
     @GetMapping("/teste")
-    public String teste() {
-        return "OK - Categorias";
+    public ResponseEntity<String> teste() {
+        return ResponseEntity.ok("OK - Categorias funcionando!");
     }
     
     @GetMapping
     public ResponseEntity<List<CategoriaServico>> listarCategorias() {
-        return ResponseEntity.ok(categoriaService.listarCategorias());
+        try {
+            List<CategoriaServico> categorias = categoriaService.listarCategorias();
+            return ResponseEntity.ok(categorias);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
     
     @GetMapping("/{id}")
@@ -41,6 +47,9 @@ public class CategoriaServicoController {
             return ResponseEntity.status(HttpStatus.CREATED).body(novaCategoria);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Erro interno do servidor");
         }
     }
     
@@ -51,6 +60,9 @@ public class CategoriaServicoController {
             return ResponseEntity.ok(categoriaAtualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Erro interno do servidor");
         }
     }
     
@@ -61,11 +73,20 @@ public class CategoriaServicoController {
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Erro interno do servidor");
         }
     }
     
     @GetMapping("/nome/{nome}")
     public ResponseEntity<List<CategoriaServico>> buscarPorNome(@PathVariable String nome) {
-        return ResponseEntity.ok(categoriaService.buscarPorNome(nome));
+        try {
+            List<CategoriaServico> categorias = categoriaService.buscarPorNome(nome);
+            return ResponseEntity.ok(categorias);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

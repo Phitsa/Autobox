@@ -16,7 +16,7 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
 
     public Usuario criarCliente(Usuario cliente) {
-        cliente.setAtivo(true);
+        // cliente.setAtivo(true);
         return usuarioRepository.save(cliente);
     }
 

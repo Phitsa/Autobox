@@ -1,12 +1,14 @@
+// components/LoginModal.js (versão atualizada)
 import React, { useState } from 'react';
-import { X, User, Lock, Mail, Eye, EyeOff, Shield } from 'lucide-react';
-import { LoginModalProps, LoginData, User as UserType } from '../types/auth';
+import { X, Lock, Mail, Eye, EyeOff, Shield } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
+const LoginModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const { login } = useAuth();
 
   // Estados para Login
   const [loginData, setLoginData] = useState({
@@ -15,13 +17,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
   });
 
   // Função para fazer login
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
+    if (!loginData.email || !loginData.senha) return;
+    
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      console.log('🔄 Tentando fazer login com:', { email: loginData.email });
+      
+      const response = await fetch('http://localhost:8080/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -29,7 +34,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
         body: JSON.stringify(loginData)
       });
 
+      console.log('📡 Response status:', response.status);
+      
       const data = await response.json();
+      console.log('📊 Response data:', data);
 
       if (response.ok) {
         // Salvar token no localStorage
@@ -38,16 +46,20 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
           id: data.id,
           nome: data.nome,
           email: data.email,
-          tipoUsuario: data.tipoUsuario
+          tipoFuncionario: data.tipoFuncionario
         }));
 
-        setSuccess('Login realizado com sucesso!');
-        
-        // Chamar callback de sucesso
-        if (onLoginSuccess) {
-          onLoginSuccess(data);
-        }
+        // Atualizar contexto de autenticação
+        login({
+          id: data.id,
+          nome: data.nome,
+          email: data.email,
+          tipoFuncionario: data.tipoFuncionario
+        });
 
+        setSuccess('Login realizado com sucesso!');
+        console.log('✅ Login bem-sucedido para:', data.email);
+        
         // Fechar modal após 1 segundo
         setTimeout(() => {
           onClose();
@@ -57,12 +69,32 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
         }, 1000);
 
       } else {
+        console.log('❌ Erro de login:', data.message);
         setError(data.message || 'Email ou senha inválidos');
       }
     } catch (err) {
-      setError('Erro de conexão. Verifique se a API está rodando.');
+      console.error('🚨 Erro de conexão:', err);
+      setError('Erro de conexão. Verifique se a API está rodando em http://localhost:8080');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Função para testar conexão com a API
+  const testConnection = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/auth/status');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ API está rodando:', data);
+        setSuccess('API conectada com sucesso!');
+        setTimeout(() => setSuccess(''), 2000);
+      } else {
+        throw new Error(`Status: ${response.status}`);
+      }
+    } catch (err) {
+      console.error('❌ Erro ao testar conexão:', err);
+      setError('API não está respondendo. Verifique se está rodando.');
     }
   };
 
@@ -83,6 +115,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
     setSuccess('');
     setShowPassword(false);
     onClose();
+  };
+
+  // Função para lidar com Enter
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && loginData.email && loginData.senha && !loading) {
+      handleLogin();
+    }
   };
 
   if (!isOpen) return null;
@@ -126,8 +165,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
             </div>
           )}
 
+          {/* Botão de teste de conexão */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={testConnection}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all text-sm"
+            >
+              🔍 Testar Conexão com API
+            </button>
+          </div>
+
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -141,6 +191,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                   placeholder="Digite seu email"
                   value={loginData.email}
                   onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                  onKeyPress={handleKeyPress}
                 />
               </div>
             </div>
@@ -158,6 +209,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                   placeholder="Digite sua senha"
                   value={loginData.senha}
                   onChange={(e) => setLoginData({...loginData, senha: e.target.value})}
+                  onKeyPress={handleKeyPress}
                 />
                 <button
                   type="button"
@@ -170,7 +222,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
             </div>
 
             <button
-              type="submit"
+              type="button"
+              onClick={handleLogin}
               disabled={loading || !loginData.email || !loginData.senha}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all transform hover:scale-[1.01] disabled:hover:scale-100 disabled:cursor-not-allowed"
             >
@@ -181,7 +234,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                 </div>
               ) : 'Entrar no Sistema'}
             </button>
-          </form>
+          </div>
 
           {/* Usuários de teste */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
@@ -217,6 +270,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess
                 </div>
               </button>
             </div>
+          </div>
+
+          {/* Debug info */}
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-400">
+              API: http://localhost:8080 | Pressione Enter para fazer login
+            </p>
           </div>
 
           {/* Rodapé */}

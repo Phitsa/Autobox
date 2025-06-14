@@ -58,45 +58,42 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // Endpoints de autenticação públicos
-                .requestMatchers("/auth/login").permitAll()
-                .requestMatchers("/auth/register").permitAll()
-                .requestMatchers("/auth/status").permitAll()
-                .requestMatchers("/auth/logout").permitAll()
+                // ⭐ ENDPOINTS DE AUTENTICAÇÃO - PÚBLICOS
+                .requestMatchers("/auth/**").permitAll()
                 
-                // Endpoints públicos
+                // ⭐ ENDPOINTS PÚBLICOS GERAIS
                 .requestMatchers("/test/public").permitAll()
                 .requestMatchers("/public/**").permitAll()
                 
-                // Documentação da API
+                // ⭐ DOCUMENTAÇÃO DA API
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
                 .requestMatchers("/swagger-resources/**").permitAll()
                 .requestMatchers("/webjars/**").permitAll()
                 
-                // Monitoramento
+                // ⭐ MONITORAMENTO
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/info").permitAll()
                 
-                // H2 Console (apenas para desenvolvimento)
+                // ⭐ H2 CONSOLE (apenas para desenvolvimento)
                 .requestMatchers("/h2-console/**").permitAll()
                 
-                // Endpoints de clientes - podem ser públicos ou protegidos conforme necessário
-                .requestMatchers("/clientes/**").permitAll()
+                // ⭐ ENDPOINTS DE CLIENTES - PÚBLICOS
+                .requestMatchers("/api/clientes/**").permitAll()
                 
-                // Endpoints de categorias - podem ser públicos ou protegidos conforme necessário
+                // ⭐ CATEGORIAS E SERVIÇOS - PÚBLICOS
                 .requestMatchers("/api/categorias/**").permitAll()
-
-                // Endpoints de funcionários - apenas para funcionários autenticados
-                .requestMatchers("/api/funcionarios/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers("/api/servicos/**").permitAll()
                 
-                // Endpoints administrativos - apenas para admins
+                // ⭐ ENDPOINTS DE FUNCIONÁRIOS - APENAS PARA FUNCIONÁRIOS AUTENTICADOS
+                .requestMatchers("/api/funcionarios/**").permitAll()
+                
+                // ⭐ ENDPOINTS ADMINISTRATIVOS - APENAS PARA ADMINS
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 
-                // Todos os outros endpoints requerem autenticação
+                // ⭐ TODOS OS OUTROS ENDPOINTS REQUEREM AUTENTICAÇÃO
                 .anyRequest().authenticated()
-
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

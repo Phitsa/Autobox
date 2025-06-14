@@ -17,7 +17,7 @@ import com.boxpro.service.UsuarioService;
 
 
 @RestController
-@RequestMapping("/clientes")
+@RequestMapping("/api/clientes")
 public class UsuarioController {
     
     
