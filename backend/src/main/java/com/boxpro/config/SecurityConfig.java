@@ -85,6 +85,9 @@ public class SecurityConfig {
                 // Endpoints de clientes - podem ser públicos ou protegidos conforme necessário
                 .requestMatchers("/clientes/**").permitAll()
                 
+                // Endpoints de categorias - podem ser públicos ou protegidos conforme necessário
+                .requestMatchers("/api/categorias/**").permitAll()
+
                 // Endpoints de funcionários - apenas para funcionários autenticados
                 .requestMatchers("/api/funcionarios/**").hasAnyRole("ADMIN", "FUNCIONARIO")
                 
@@ -93,6 +96,7 @@ public class SecurityConfig {
                 
                 // Todos os outros endpoints requerem autenticação
                 .anyRequest().authenticated()
+
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
