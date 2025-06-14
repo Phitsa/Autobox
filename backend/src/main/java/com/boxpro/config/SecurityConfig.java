@@ -67,10 +67,10 @@ public class SecurityConfig {
                 // ⭐ DOCUMENTAÇÃO DA API - COMPLETAMENTE PÚBLICO
                 .requestMatchers("/api/swagger-ui/**").permitAll()
                 .requestMatchers("/api/swagger-ui.html").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/api-docs/**").permitAll()
+                .requestMatchers("/api/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/api-docs/**").permitAll()
                 .requestMatchers("/api/swagger-resources/**").permitAll()
-                .requestMatchers("/webjars/**").permitAll()
+                .requestMatchers("/api/webjars/**").permitAll()
                 .requestMatchers("/api/swagger-config").permitAll()
                 .requestMatchers("/api/v3/api-docs/**").permitAll()
                 
@@ -99,28 +99,28 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias/teste").permitAll()
                 
                 // POST, PUT, DELETE para ADMIN e FUNCIONARIO
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/clientes/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/clientes/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/clientes/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/clientes/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/clientes/**").permitAll()
                 
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/categorias/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/categorias/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/categorias/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/categorias/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/categorias/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/categorias/**").permitAll()
                 
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/servicos/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/servicos/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/servicos/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/servicos/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/servicos/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/servicos/**").permitAll()
                 
                 // ⭐ FALLBACK: Qualquer outro endpoint dessas APIs requer ADMIN ou FUNCIONARIO
-                .requestMatchers("/api/clientes/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers("/api/categorias/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                .requestMatchers("/api/servicos/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers("/api/clientes/**").permitAll()
+                .requestMatchers("/api/categorias/**").permitAll()
+                .requestMatchers("/api/servicos/**").permitAll()
                 
                 // ⭐ ENDPOINTS DE FUNCIONÁRIOS - APENAS PARA ADMIN
-                .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
+                .requestMatchers("/api/funcionarios/**").permitAll()
                 
                 // ⭐ ENDPOINTS ADMINISTRATIVOS - APENAS PARA ADMINS
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").permitAll()
                 
                 // ⭐ TODOS OS OUTROS ENDPOINTS REQUEREM AUTENTICAÇÃO
                 .anyRequest().authenticated()
