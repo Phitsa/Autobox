@@ -1,4 +1,3 @@
-// lib/api.ts
 import axios from 'axios';
 
 // Configuração base da API
@@ -39,32 +38,34 @@ api.interceptors.response.use(
   }
 );
 
-// Funções específicas para diferentes endpoints
+// ===== AUTENTICAÇÃO =====
 export const apiAuth = {
   login: (credentials: { email: string; senha: string }) =>
     api.post('/auth/login', credentials),
-  
+
   register: (userData: any) =>
     api.post('/auth/register', userData),
-  
+
   validateToken: () =>
     api.get('/auth/validate-token'),
-  
+
   getCurrentUser: () =>
     api.get('/auth/me'),
-  
+
   logout: () =>
     api.post('/auth/logout')
 };
 
+// ===== CLIENTES =====
 export const apiClientes = {
-  getAll: () => api.get('/clientes'),
-  getById: (id: number) => api.get(`/clientes/${id}`),
-  create: (cliente: any) => api.post('/clientes', cliente),
-  update: (id: number, cliente: any) => api.put(`/clientes/${id}`, cliente),
-  delete: (id: number) => api.delete(`/clientes/${id}`)
+  getAll: () => api.get('/api/clientes'), // ⭐ Corrigido: faltava /api/
+  getById: (id: number) => api.get(`/api/clientes/${id}`), // ⭐ Corrigido
+  create: (cliente: any) => api.post('/api/clientes', cliente), // ⭐ Corrigido
+  update: (id: number, cliente: any) => api.put(`/api/clientes/${id}`, cliente), // ⭐ Corrigido
+  delete: (id: number) => api.delete(`/api/clientes/${id}`) // ⭐ Corrigido
 };
 
+// ===== CATEGORIAS =====
 export const apiCategorias = {
   getAll: () => api.get('/api/categorias'),
   getById: (id: number) => api.get(`/api/categorias/${id}`),
@@ -74,6 +75,7 @@ export const apiCategorias = {
   teste: () => api.get('/api/categorias/teste')
 };
 
+// ===== SERVIÇOS =====
 export const apiServicos = {
   getAll: () => api.get('/api/servicos'),
   getById: (id: number) => api.get(`/api/servicos/${id}`),
@@ -81,5 +83,101 @@ export const apiServicos = {
   update: (id: number, servico: any) => api.put(`/api/servicos/${id}`, servico),
   delete: (id: number) => api.delete(`/api/servicos/${id}`)
 };
+
+// ===== FUNCIONÁRIOS =====
+export const apiFuncionarios = {
+  // GET - Listar todos os funcionários
+  getAll: () => api.get('/api/funcionarios'), // ⭐ Corrigido: adicionado /api/
+
+  // GET - Listar apenas funcionários ativos
+  getAtivos: () => api.get('/api/funcionarios/ativos'), // ⭐ Corrigido
+
+  // GET - Listar funcionários disponíveis (ativos e não bloqueados)
+  getDisponiveis: () => api.get('/api/funcionarios/disponiveis'), // ⭐ Corrigido
+
+  // GET - Buscar funcionário por ID
+  getById: (id: number) => api.get(`/api/funcionarios/${id}`), // ⭐ Corrigido
+
+  // GET - Buscar funcionário por email
+  getByEmail: (email: string) => api.get(`/api/funcionarios/buscar/email/${email}`), // ⭐ Corrigido
+
+  // GET - Buscar funcionários por nome
+  getByNome: (nome: string) => api.get(`/api/funcionarios/buscar/nome/${nome}`), // ⭐ Corrigido
+
+  // GET - Listar funcionários por tipo (ADMIN ou FUNCIONARIO)
+  getByTipo: (tipo: 'ADMIN' | 'FUNCIONARIO') => api.get(`/api/funcionarios/tipo/${tipo}`), // ⭐ Corrigido
+
+  // GET - Estatísticas dos funcionários
+  getStats: () => api.get('/api/funcionarios/stats'), // ⭐ Corrigido
+
+  // GET - Status do controller
+  getStatus: () => api.get('/api/funcionarios/status'), // ⭐ Corrigido
+
+  // POST - Criar novo funcionário
+  create: (funcionario: {
+    nome: string;
+    email: string;
+    senha: string;
+    telefone?: string;
+    cpf?: string;
+    tipoFuncionario?: 'ADMIN' | 'FUNCIONARIO';
+    ativo?: boolean;
+  }) => api.post('/api/funcionarios', funcionario), // ⭐ Corrigido
+
+  // PUT - Atualizar funcionário
+  update: (id: number, funcionario: {
+    nome: string;
+    email: string;
+    senha?: string;
+    telefone?: string;
+    cpf?: string;
+    tipoFuncionario?: 'ADMIN' | 'FUNCIONARIO';
+    ativo?: boolean;
+  }) => api.put(`/api/funcionarios/${id}`, funcionario), // ⭐ Corrigido
+
+  // DELETE - Desativar funcionário (soft delete)
+  delete: (id: number) => api.delete(`/api/funcionarios/${id}`), // ⭐ Corrigido
+
+  // PUT - Bloquear funcionário
+  bloquear: (id: number) => api.put(`/api/funcionarios/${id}/bloquear`), // ⭐ Corrigido
+
+  // PUT - Desbloquear funcionário
+  desbloquear: (id: number) => api.put(`/api/funcionarios/${id}/desbloquear`), // ⭐ Corrigido
+};
+
+// ===== TIPOS TYPESCRIPT =====
+
+export interface TypeFuncionario {
+  id: number;
+  nome: string;
+  email: string;
+  telefone?: string;
+  cpf?: string;
+  tipoFuncionario: 'ADMIN' | 'FUNCIONARIO';
+  ativo: boolean;
+  dataCriacao: string;
+  dataAtualizacao?: string;
+  ultimoLogin?: string;
+  tentativasLogin: number;
+  bloqueado: boolean;
+}
+
+export interface TypeFuncionarioForm {
+  nome: string;
+  email: string;
+  senha: string;
+  telefone?: string;
+  cpf?: string;
+  tipoFuncionario: 'ADMIN' | 'FUNCIONARIO';
+}
+
+export interface TypeFuncionarioStats {
+  total: number;
+  ativos: number;
+  disponiveis: number;
+  admins: number;
+  funcionarios: number;
+  inativos: number;
+}
 
 export default api;

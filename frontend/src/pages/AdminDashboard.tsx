@@ -11,7 +11,8 @@ import {
   Plus,
   DollarSign,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,12 +21,24 @@ import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     window.location.href = '/';
   };
-  const navigate = useNavigate(); // ← Adicione esta linha
+
+  // Verificar se o usuário é ADMIN
+  const isAdmin = user?.tipoFuncionario === 'ADMIN';
+
+  const handleFuncionariosClick = () => {
+    if (isAdmin) {
+      navigate('/funcionarios');
+    } else {
+      // Apenas mostrar que não tem acesso, mas não navegar
+      alert('Acesso restrito! Apenas administradores podem gerenciar funcionários.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -132,20 +145,56 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+          {/* Card de Funcionários - Modificado */}
+          <div 
+            className={`rounded-lg shadow-md transition-shadow cursor-pointer ${
+              isAdmin 
+                ? 'bg-white hover:shadow-lg' 
+                : 'bg-gray-100 opacity-75'
+            }`}
+            onClick={handleFuncionariosClick}
+          >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-orange-600" />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  isAdmin 
+                    ? 'bg-orange-100' 
+                    : 'bg-gray-200'
+                }`}>
+                  {isAdmin ? (
+                    <Users className="w-6 h-6 text-orange-600" />
+                  ) : (
+                    <Lock className="w-6 h-6 text-gray-500" />
+                  )}
                 </div>
-                <Button size="sm" variant="outline">
-                  Acessar
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  disabled={!isAdmin}
+                  className={!isAdmin ? 'opacity-60' : ''}
+                >
+                  {isAdmin ? 'Acessar' : 'Restrito'}
                 </Button>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Relatórios</h3>
-              <p className="text-gray-600 text-sm">
-                Visualize relatórios de vendas, performance e análises detalhadas.
+              <h3 className={`text-lg font-semibold mb-2 ${
+                isAdmin ? 'text-gray-900' : 'text-gray-500'
+              }`}>
+                Funcionários
+              </h3>
+              <p className={`text-sm ${
+                isAdmin ? 'text-gray-600' : 'text-gray-400'
+              }`}>
+                {isAdmin 
+                  ? 'Gerencie funcionários, permissões e controle de acesso.'
+                  : 'Acesso restrito apenas para administradores.'
+                }
               </p>
+              {!isAdmin && (
+                <div className="mt-2 flex items-center text-xs text-gray-500">
+                  <Lock className="w-3 h-3 mr-1" />
+                  <span>Apenas ADMIN</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -200,9 +249,14 @@ const AdminDashboard = () => {
               <Car className="w-4 h-4 mr-2" />
               Adicionar Serviço
             </Button>
-            <Button variant="outline">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Ver Relatórios
+            <Button 
+              variant="outline"
+              disabled={!isAdmin}
+              onClick={handleFuncionariosClick}
+              className={!isAdmin ? 'opacity-60' : ''}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              {isAdmin ? 'Gerenciar Funcionários' : 'Funcionários (Restrito)'}
             </Button>
           </div>
         </div>

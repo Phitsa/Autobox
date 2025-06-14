@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ClientesDashboard from "./pages/ClientesDashboard";
 import Categorias from "./pages/Categorias";
 import Servicos from "./pages/Servicos";
+import Funcionarios from './pages/Funcionarios';
 
 const queryClient = new QueryClient();
 
@@ -65,7 +66,14 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/funcionarios"
+          element={
+            <ProtectedRoute>
+              <Funcionarios />
+            </ProtectedRoute>
+          }
+        />
         {/* Rota 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
