@@ -58,36 +58,66 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // ⭐ ENDPOINTS DE AUTENTICAÇÃO - PÚBLICOS
+                // ⭐ ENDPOINTS DE AUTENTICAÇÃO - PÚBLICOS (ORDEM IMPORTA!)
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/auth/login").permitAll()
+                .requestMatchers("/auth/register").permitAll()
+                .requestMatchers("/auth/status").permitAll()
+                
+                // ⭐ DOCUMENTAÇÃO DA API - COMPLETAMENTE PÚBLICO
+                .requestMatchers("/api/swagger-ui/**").permitAll()
+                .requestMatchers("/api/swagger-ui.html").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/api-docs/**").permitAll()
+                .requestMatchers("/api/swagger-resources/**").permitAll()
+                .requestMatchers("/webjars/**").permitAll()
+                .requestMatchers("/api/swagger-config").permitAll()
+                .requestMatchers("/api/v3/api-docs/**").permitAll()
                 
                 // ⭐ ENDPOINTS PÚBLICOS GERAIS
                 .requestMatchers("/test/public").permitAll()
                 .requestMatchers("/public/**").permitAll()
-                
-                // ⭐ DOCUMENTAÇÃO DA API
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/swagger-ui.html").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/swagger-resources/**").permitAll()
-                .requestMatchers("/webjars/**").permitAll()
+                .requestMatchers("/").permitAll()
+                .requestMatchers("/index.html").permitAll()
+                .requestMatchers("/static/**").permitAll()
+                .requestMatchers("/favicon.ico").permitAll()
                 
                 // ⭐ MONITORAMENTO
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/info").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 
                 // ⭐ H2 CONSOLE (apenas para desenvolvimento)
                 .requestMatchers("/h2-console/**").permitAll()
                 
-                // ⭐ ENDPOINTS DE CLIENTES - PÚBLICOS
-                .requestMatchers("/api/clientes/**").permitAll()
+                // ⭐ ROTAS ESPECÍFICAS POR MÉTODO HTTP E ROLE
                 
-                // ⭐ CATEGORIAS E SERVIÇOS - PÚBLICOS
-                .requestMatchers("/api/categorias/**").permitAll()
-                .requestMatchers("/api/servicos/**").permitAll()
+                // GET público para listagem básica
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/clientes").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicos").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias/teste").permitAll()
                 
-                // ⭐ ENDPOINTS DE FUNCIONÁRIOS - APENAS PARA FUNCIONÁRIOS AUTENTICADOS
-                .requestMatchers("/api/funcionarios/**").permitAll()
+                // POST, PUT, DELETE para ADMIN e FUNCIONARIO
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/clientes/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/clientes/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMIN")
+                
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/categorias/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/categorias/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/categorias/**").hasRole("ADMIN")
+                
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/servicos/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/servicos/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/servicos/**").hasRole("ADMIN")
+                
+                // ⭐ FALLBACK: Qualquer outro endpoint dessas APIs requer ADMIN ou FUNCIONARIO
+                .requestMatchers("/api/clientes/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers("/api/categorias/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                .requestMatchers("/api/servicos/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                
+                // ⭐ ENDPOINTS DE FUNCIONÁRIOS - APENAS PARA ADMIN
+                .requestMatchers("/api/funcionarios/**").hasRole("ADMIN")
                 
                 // ⭐ ENDPOINTS ADMINISTRATIVOS - APENAS PARA ADMINS
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -97,7 +127,12 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .headers(headers -> headers.frameOptions().sameOrigin());
+            // ⭐ CORS e Headers
+            .headers(headers -> headers
+                .frameOptions().sameOrigin()
+                .contentTypeOptions().and()
+                .httpStrictTransportSecurity(hstsConfig -> hstsConfig.disable())
+            );
 
         return http.build();
     }
@@ -105,10 +140,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        
+        // ⭐ CORS mais permissivo para desenvolvimento
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "Access-Control-Allow-Origin"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

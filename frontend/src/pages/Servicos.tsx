@@ -5,7 +5,7 @@ import { TypeServico, TypeCategoria } from "../types/TypeServico";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Car, ArrowLeft, Edit, Trash2, Calendar, DollarSign, Clock } from 'lucide-react';
+import { Plus, Car, ArrowLeft, Edit, Trash2, Calendar, DollarSign, Clock, Settings } from 'lucide-react';
 import ServicoForm from '@/components/ServicoFormProps';
 import { parseISO, isSameMonth } from 'date-fns';
 import {
@@ -106,6 +106,10 @@ const Servicos = () => {
     navigate('/admin');
   };
 
+  const handleIrCategorias = () => {
+    navigate('/categorias');
+  };
+
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR');
   };
@@ -150,30 +154,67 @@ const Servicos = () => {
             </div>
           </div>
           
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) setEditingServico(null);
-            }}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Novo Serviço
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingServico ? 'Editar Serviço' : 'Adicionar Novo Serviço'}
-                </DialogTitle>
-              </DialogHeader>
-              <ServicoForm 
-                onSubmit={editingServico ? handleAtualizarServico : handleNovoServico} 
-                initialData={editingServico}
-                categorias={categorias}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-3">
+            {/* Atalho para Categorias */}
+            <Button 
+              variant="outline" 
+              onClick={handleIrCategorias}
+              className="flex items-center gap-2 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors"
+              title="Gerenciar categorias dos serviços"
+            >
+              <Settings className="w-4 h-4" />
+              Categorias
+            </Button>
+
+            {/* Botão Novo Serviço */}
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) setEditingServico(null);
+              }}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Novo Serviço
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingServico ? 'Editar Serviço' : 'Adicionar Novo Serviço'}
+                  </DialogTitle>
+                </DialogHeader>
+                <ServicoForm 
+                  onSubmit={editingServico ? handleAtualizarServico : handleNovoServico} 
+                  initialData={editingServico}
+                  categorias={categorias}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+
+        {/* Alerta sobre Categorias (opcional) */}
+        {categorias.length === 0 && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Settings className="w-5 h-5 text-yellow-600" />
+              <div>
+                <p className="text-yellow-800 font-medium">Nenhuma categoria encontrada</p>
+                <p className="text-yellow-700 text-sm">
+                  Crie categorias primeiro para organizar melhor seus serviços.
+                </p>
+              </div>
+            </div>
+            <Button 
+              size="sm" 
+              onClick={handleIrCategorias}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Criar Categoria
+            </Button>
+          </div>
+        )}
 
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

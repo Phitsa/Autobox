@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
-  Calendar, 
-  Users, 
-  Car, 
-  BarChart3, 
-  Settings, 
-  LogOut, 
+import {
+  Calendar,
+  Users,
+  Car,
+  BarChart3,
+  Settings,
+  LogOut,
   Bell,
   Search,
   Plus,
@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import CardClientes from '@/components/Client/CardClientes';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -24,6 +25,7 @@ const AdminDashboard = () => {
     logout();
     window.location.href = '/';
   };
+  const navigate = useNavigate(); // ← Adicione esta linha
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -119,7 +121,7 @@ const AdminDashboard = () => {
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Car className="w-6 h-6 text-purple-600" />
                 </div>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={() => navigate('/servicos')}>
                   Acessar
                 </Button>
               </div>

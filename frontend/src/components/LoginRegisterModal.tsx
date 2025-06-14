@@ -1,7 +1,8 @@
-// components/LoginModal.js (versão atualizada)
+// components/LoginModal.js (versão com redirecionamento)
 import React, { useState } from 'react';
 import { X, Lock, Mail, Eye, EyeOff, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
@@ -9,6 +10,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const { login } = useAuth();
+  const navigate = useNavigate(); // ← Adicionar navegação
 
   // Estados para Login
   const [loginData, setLoginData] = useState({
@@ -57,16 +59,21 @@ const LoginModal = ({ isOpen, onClose }) => {
           tipoFuncionario: data.tipoFuncionario
         });
 
-        setSuccess('Login realizado com sucesso!');
+        setSuccess('Login realizado com sucesso! Redirecionando...');
         console.log('✅ Login bem-sucedido para:', data.email);
         
-        // Fechar modal após 1 segundo
+        // Fechar modal e redirecionar após 800ms
         setTimeout(() => {
           onClose();
           setSuccess('');
           // Reset form
           setLoginData({ email: '', senha: '' });
-        }, 1000);
+          
+          // ⭐ REDIRECIONAMENTO PARA ADMIN
+          navigate('/admin');
+          console.log('🔀 Redirecionando para /admin');
+          
+        }, 800);
 
       } else {
         console.log('❌ Erro de login:', data.message);
@@ -77,24 +84,6 @@ const LoginModal = ({ isOpen, onClose }) => {
       setError('Erro de conexão. Verifique se a API está rodando em http://localhost:8080');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Função para testar conexão com a API
-  const testConnection = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/auth/status');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ API está rodando:', data);
-        setSuccess('API conectada com sucesso!');
-        setTimeout(() => setSuccess(''), 2000);
-      } else {
-        throw new Error(`Status: ${response.status}`);
-      }
-    } catch (err) {
-      console.error('❌ Erro ao testar conexão:', err);
-      setError('API não está respondendo. Verifique se está rodando.');
     }
   };
 
@@ -136,7 +125,7 @@ const LoginModal = ({ isOpen, onClose }) => {
               <Shield className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">BoxPro</h2>
+              <h2 className="text-2xl font-bold text-white">AutoBox</h2>
               <p className="text-blue-100 text-sm">Sistema de Gestão</p>
             </div>
           </div>
@@ -164,17 +153,6 @@ const LoginModal = ({ isOpen, onClose }) => {
               {success}
             </div>
           )}
-
-          {/* Botão de teste de conexão */}
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={testConnection}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all text-sm"
-            >
-              🔍 Testar Conexão com API
-            </button>
-          </div>
 
           {/* Login Form */}
           <div className="space-y-5">
@@ -271,18 +249,11 @@ const LoginModal = ({ isOpen, onClose }) => {
               </button>
             </div>
           </div>
-
-          {/* Debug info */}
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-400">
-              API: http://localhost:8080 | Pressione Enter para fazer login
-            </p>
-          </div>
-
+          
           {/* Rodapé */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
-              BoxPro v1.0 - Sistema de Gestão Automotiva
+              AutoBox v1.0 - Sistema de Gestão Automotiva
             </p>
           </div>
         </div>

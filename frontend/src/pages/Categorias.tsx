@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Settings, ArrowLeft, Edit, Trash2, Calendar, FolderOpen, AlertCircle } from 'lucide-react';
 import CategoriaForm from '@/components/CategoriaFormProps';
+import { useNavigate } from 'react-router-dom';
+
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -49,6 +51,7 @@ const Categorias = () => {
   const [erro, setErro] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [usingMockData, setUsingMockData] = useState(false);
+  const navigate = useNavigate();
 
   // Função para testar conexão com o backend
   const testarConexao = async () => {
@@ -217,8 +220,7 @@ const Categorias = () => {
   };
 
   const handleVoltarAdmin = () => {
-    // navigate('/admin');
-    console.log('Voltar para admin');
+    navigate('/servicos');
   };
 
   const formatarData = (data: string) => {
