@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,7 +56,13 @@ public class UsuarioController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        return usuarioService.listarTodos(page, size);
+        return usuarioService.listPage(page, size);
+    }
+
+    @GetMapping("/todos")
+    public ResponseEntity<List<Usuario>> listarTodosClientes() {
+        List<Usuario> clientes = usuarioService.listarTodos();
+        return ResponseEntity.ok(clientes);
     }
 
     @GetMapping("/id/{id}")
@@ -82,5 +89,15 @@ public class UsuarioController {
     @GetMapping("/nome/{nome}")
     public ResponseEntity<List<Usuario>> buscarPorNome(@PathVariable String nome) {
         return ResponseEntity.ok(usuarioService.buscarUsuarioPorNome(nome));
+    }
+
+    @DeleteMapping("delete/{id}")
+    public ResponseEntity<Void> removerCliente(@PathVariable Long id) {
+        if (!usuarioService.buscarPorId(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        usuarioService.removerCliente(id);
+        return ResponseEntity.noContent().build();
     }
 }
