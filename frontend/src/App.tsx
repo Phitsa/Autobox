@@ -14,6 +14,7 @@ import ClientesDashboard from "./pages/ClientesDashboard";
 import Categorias from "./pages/Categorias";
 import Servicos from "./pages/Servicos";
 import Funcionarios from './pages/Funcionarios';
+import Configuracoes from "./pages/Configuracoes";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Funcionarios />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/configuracoes"
+          element={
+            <ProtectedRoute>
+              <Configuracoes />
             </ProtectedRoute>
           }
         />

@@ -146,29 +146,27 @@ const AdminDashboard = () => {
           </div>
 
           {/* Card de Funcionários - Modificado */}
-          <div 
-            className={`rounded-lg shadow-md transition-shadow cursor-pointer ${
-              isAdmin 
-                ? 'bg-white hover:shadow-lg' 
+          <div
+            className={`rounded-lg shadow-md transition-shadow cursor-pointer ${isAdmin
+                ? 'bg-white hover:shadow-lg'
                 : 'bg-gray-100 opacity-75'
-            }`}
+              }`}
             onClick={handleFuncionariosClick}
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  isAdmin 
-                    ? 'bg-orange-100' 
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isAdmin
+                    ? 'bg-orange-100'
                     : 'bg-gray-200'
-                }`}>
+                  }`}>
                   {isAdmin ? (
                     <Users className="w-6 h-6 text-orange-600" />
                   ) : (
                     <Lock className="w-6 h-6 text-gray-500" />
                   )}
                 </div>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   disabled={!isAdmin}
                   className={!isAdmin ? 'opacity-60' : ''}
@@ -176,15 +174,13 @@ const AdminDashboard = () => {
                   {isAdmin ? 'Acessar' : 'Restrito'}
                 </Button>
               </div>
-              <h3 className={`text-lg font-semibold mb-2 ${
-                isAdmin ? 'text-gray-900' : 'text-gray-500'
-              }`}>
+              <h3 className={`text-lg font-semibold mb-2 ${isAdmin ? 'text-gray-900' : 'text-gray-500'
+                }`}>
                 Funcionários
               </h3>
-              <p className={`text-sm ${
-                isAdmin ? 'text-gray-600' : 'text-gray-400'
-              }`}>
-                {isAdmin 
+              <p className={`text-sm ${isAdmin ? 'text-gray-600' : 'text-gray-400'
+                }`}>
+                {isAdmin
                   ? 'Gerencie funcionários, permissões e controle de acesso.'
                   : 'Acesso restrito apenas para administradores.'
                 }
@@ -221,7 +217,7 @@ const AdminDashboard = () => {
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                   <Settings className="w-6 h-6 text-gray-600" />
                 </div>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={() => navigate('/configuracoes')}>
                   Acessar
                 </Button>
               </div>
@@ -249,7 +245,7 @@ const AdminDashboard = () => {
               <Car className="w-4 h-4 mr-2" />
               Adicionar Serviço
             </Button>
-            <Button 
+            <Button
               variant="outline"
               disabled={!isAdmin}
               onClick={handleFuncionariosClick}

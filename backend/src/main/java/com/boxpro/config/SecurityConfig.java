@@ -96,7 +96,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/clientes").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicos").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias/teste").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/empresa").permitAll()
                 
                 // POST, PUT, DELETE para ADMIN e FUNCIONARIO
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/clientes/**").permitAll()
@@ -111,11 +111,16 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/servicos/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/servicos/**").permitAll()
                 
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/empresa/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/empresa/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/empresa/**").permitAll()
+
                 // ⭐ FALLBACK: Qualquer outro endpoint dessas APIs requer ADMIN ou FUNCIONARIO
                 .requestMatchers("/api/clientes/**").permitAll()
                 .requestMatchers("/api/categorias/**").permitAll()
                 .requestMatchers("/api/servicos/**").permitAll()
-                
+                .requestMatchers("/api/empresa/**").permitAll()
+
                 // ⭐ ENDPOINTS DE FUNCIONÁRIOS - APENAS PARA ADMIN
                 .requestMatchers("/api/funcionarios/**").permitAll()
                 
