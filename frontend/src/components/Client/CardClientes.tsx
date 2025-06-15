@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Users } from "lucide-react"; // ou o caminho do ícone
-import { Button } from "@/components/ui/button"; // ou o seu botão customizado
+import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const CardClientes: React.FC = () => {
   const navigate = useNavigate();

@@ -93,6 +93,7 @@ public class SecurityConfig {
                 // ⭐ ROTAS ESPECÍFICAS POR MÉTODO HTTP E ROLE
                 
                 // GET público para listagem básica
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/veiculos.**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/clientes").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicos").permitAll()
@@ -103,6 +104,11 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/clientes/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/clientes/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/clientes/**").permitAll()
+
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/veiculos/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/veiculos/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/veiculos/**").permitAll()
+
                 
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/categorias/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/categorias/**").permitAll()
@@ -122,6 +128,7 @@ public class SecurityConfig {
 
                 // ⭐ FALLBACK: Qualquer outro endpoint dessas APIs requer ADMIN ou FUNCIONARIO
                 .requestMatchers("/api/clientes/**").permitAll()
+                .requestMatchers("/api/veiculos/**").permitAll()
                 .requestMatchers("/api/categorias/**").permitAll()
                 .requestMatchers("/api/servicos/**").permitAll()
                 .requestMatchers("/api/empresa/**").permitAll()

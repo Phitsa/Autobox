@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import CardClientes from '@/components/Client/CardClientes';
 import { useNavigate } from 'react-router-dom';
+import CardVeiculos from '@/components/Vehicle/CardVeiculo';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -203,22 +204,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-yellow-600" />
-                </div>
-                <Button size="sm" variant="outline">
-                  Acessar
-                </Button>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Financeiro</h3>
-              <p className="text-gray-600 text-sm">
-                Controle de receitas, despesas e fluxo de caixa da empresa.
-              </p>
-            </div>
-          </div>
+          <CardVeiculos></CardVeiculos>
 
           {/* Card de Configurações - Com Restrição ADMIN */}
           <div
