@@ -3,6 +3,10 @@ package com.boxpro.controller;
 import com.boxpro.entity.CategoriaServico;
 import com.boxpro.service.CategoriaServicoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +26,29 @@ public class CategoriaServicoController {
         return ResponseEntity.ok("OK - Categorias funcionando!");
     }
     
+    // Endpoint paginado para a lista principal
     @GetMapping
-    public ResponseEntity<List<CategoriaServico>> listarCategorias() {
+    public ResponseEntity<Page<CategoriaServico>> listarCategorias(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.Direction.DESC : Sort.Direction.ASC;
+            
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+            Page<CategoriaServico> categorias = categoriaService.listarCategoriasPaginadas(pageable);
+            return ResponseEntity.ok(categorias);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    // Endpoint para buscar todas as categorias (para estatísticas)
+    @GetMapping("/todas")
+    public ResponseEntity<List<CategoriaServico>> listarTodasCategorias() {
         try {
             List<CategoriaServico> categorias = categoriaService.listarCategorias();
             return ResponseEntity.ok(categorias);

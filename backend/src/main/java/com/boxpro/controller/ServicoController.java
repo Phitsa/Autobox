@@ -3,6 +3,10 @@ package com.boxpro.controller;
 import com.boxpro.entity.Servico;
 import com.boxpro.service.ServicoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +26,29 @@ public class ServicoController {
         return ResponseEntity.ok("OK - Serviços funcionando!");
     }
     
+    // Endpoint paginado para a lista principal
     @GetMapping
-    public ResponseEntity<List<Servico>> listarServicos() {
+    public ResponseEntity<Page<Servico>> listarServicos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.Direction.DESC : Sort.Direction.ASC;
+            
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+            Page<Servico> servicos = servicoService.listarServicosPaginados(pageable);
+            return ResponseEntity.ok(servicos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    // Endpoint para buscar todos os serviços (para estatísticas)
+    @GetMapping("/todos")
+    public ResponseEntity<List<Servico>> listarTodosServicos() {
         try {
             List<Servico> servicos = servicoService.listarServicos();
             return ResponseEntity.ok(servicos);

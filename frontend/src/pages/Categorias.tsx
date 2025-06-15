@@ -47,10 +47,13 @@ const mockCategorias: TypeCategoria[] = [
 const Categorias = () => {
   const [editingCategoria, setEditingCategoria] = useState<TypeCategoria | null>(null);
   const [categorias, setCategorias] = useState<TypeCategoria[]>([]);
+  const [totalCategorias, setTotalCategorias] = useState<TypeCategoria[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [usingMockData, setUsingMockData] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
 
   // Função para testar conexão com o backend
@@ -63,39 +66,45 @@ const Categorias = () => {
     }
   };
 
-  // Buscar categorias do banco com fallback
+  // Buscar categorias paginadas
   useEffect(() => {
     const buscarCategorias = async () => {
       try {
-        setLoading(true);
-        setErro(null);
-        
         // Primeiro testa se o backend está rodando
         const backendOnline = await testarConexao();
         
         if (!backendOnline) {
           console.warn("Backend não está disponível, usando dados mock");
-          setCategorias(mockCategorias);
+          // Simular paginação com dados mock
+          const startIndex = page * 5;
+          const endIndex = startIndex + 5;
+          const paginatedMock = mockCategorias.slice(startIndex, endIndex);
+          setCategorias(paginatedMock);
+          setTotalPages(Math.ceil(mockCategorias.length / 5));
           setUsingMockData(true);
           setErro("⚠️ Usando dados de demonstração - Backend não conectado");
           return;
         }
 
-        // Se backend estiver online, busca os dados reais
-        const response = await fetch('http://localhost:8080/api/categorias');
+        const response = await fetch(`http://localhost:8080/api/categorias?page=${page}&size=5`);
         
         if (!response.ok) {
           throw new Error(`Erro HTTP: ${response.status}`);
         }
         
-        const categoriasData = await response.json();
-        setCategorias(categoriasData);
+        const data = await response.json();
+        setCategorias(data.content);
+        setTotalPages(data.totalPages);
         setUsingMockData(false);
         
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
-        // Em caso de erro, usa dados mock
-        setCategorias(mockCategorias);
+        // Em caso de erro, usa dados mock paginados
+        const startIndex = page * 5;
+        const endIndex = startIndex + 5;
+        const paginatedMock = mockCategorias.slice(startIndex, endIndex);
+        setCategorias(paginatedMock);
+        setTotalPages(Math.ceil(mockCategorias.length / 5));
         setUsingMockData(true);
         setErro("⚠️ Erro de conexão - Usando dados de demonstração");
       } finally {
@@ -104,20 +113,64 @@ const Categorias = () => {
     };
 
     buscarCategorias();
+  }, [page]);
+
+  // Buscar todas as categorias para estatísticas
+  const buscarTotalCategorias = async () => {
+    try {
+      const backendOnline = await testarConexao();
+      
+      if (!backendOnline) {
+        setTotalCategorias(mockCategorias);
+        return;
+      }
+
+      const response = await fetch('http://localhost:8080/api/categorias/todas');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTotalCategorias(data);
+      } else {
+        setTotalCategorias(mockCategorias);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar total de categorias:", error);
+      setTotalCategorias(mockCategorias);
+    }
+  };
+
+  // Buscar dados iniciais
+  useEffect(() => {
+    buscarTotalCategorias();
   }, []);
 
   const handleNovaCategoria = async (novaCategoria: Omit<TypeCategoria, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       if (usingMockData) {
         // Modo mock
-        const novaId = Math.max(...categorias.map(c => c.id)) + 1;
+        const novaId = Math.max(...totalCategorias.map(c => c.id)) + 1;
         const categoria: TypeCategoria = {
           ...novaCategoria,
           id: novaId,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        setCategorias([...categorias, categoria]);
+        
+        // Atualizar dados totais
+        const novoTotal = [...totalCategorias, categoria];
+        setTotalCategorias(novoTotal);
+        
+        // Atualizar página atual se houver espaço
+        if (categorias.length < 5) {
+          setCategorias(prev => [...prev, categoria]);
+        } else {
+          // Simular recarregamento da página
+          const startIndex = page * 5;
+          const endIndex = startIndex + 5;
+          setCategorias(novoTotal.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(novoTotal.length / 5));
+        }
+        
         setDialogOpen(false);
         return;
       }
@@ -133,7 +186,19 @@ const Categorias = () => {
       
       if (response.ok) {
         const novaCategoriaData = await response.json();
-        setCategorias([...categorias, novaCategoriaData]);
+        
+        // Atualizar página atual se houver espaço
+        if (categorias.length < 5) {
+          setCategorias(prev => [...prev, novaCategoriaData]);
+        } else {
+          // Recarregar página atual
+          const categoriasResponse = await fetch(`http://localhost:8080/api/categorias?page=${page}&size=5`);
+          const data = await categoriasResponse.json();
+          setCategorias(data.content);
+          setTotalPages(data.totalPages);
+        }
+        
+        buscarTotalCategorias(); // Atualizar estatísticas
         setDialogOpen(false);
       } else {
         const errorText = await response.text();
@@ -156,13 +221,23 @@ const Categorias = () => {
     try {
       if (usingMockData) {
         // Modo mock
-        setCategorias(prev => 
-          prev.map(cat => 
-            cat.id === editingCategoria.id 
-              ? { ...cat, ...categoriaAtualizada, updatedAt: new Date().toISOString() }
-              : cat
-          )
+        const categoriaEditada = {
+          ...editingCategoria,
+          ...categoriaAtualizada,
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Atualizar dados totais
+        const novoTotal = totalCategorias.map(cat => 
+          cat.id === editingCategoria.id ? categoriaEditada : cat
         );
+        setTotalCategorias(novoTotal);
+        
+        // Atualizar página atual
+        setCategorias(prev => 
+          prev.map(cat => cat.id === editingCategoria.id ? categoriaEditada : cat)
+        );
+        
         setDialogOpen(false);
         setEditingCategoria(null);
         return;
@@ -179,9 +254,13 @@ const Categorias = () => {
       
       if (response.ok) {
         const categoriaAtualizadaData = await response.json();
+        
+        // Atualizar página atual
         setCategorias(prev => 
           prev.map(cat => cat.id === editingCategoria.id ? categoriaAtualizadaData : cat)
         );
+        
+        buscarTotalCategorias(); // Atualizar estatísticas
         setDialogOpen(false);
         setEditingCategoria(null);
       } else {
@@ -198,7 +277,22 @@ const Categorias = () => {
     try {
       if (usingMockData) {
         // Modo mock
+        const novoTotal = totalCategorias.filter(categoria => categoria.id !== id);
+        setTotalCategorias(novoTotal);
+        
+        // Remover da página atual
         setCategorias(prev => prev.filter(categoria => categoria.id !== id));
+        
+        // Se a página ficou vazia e não é a primeira, voltar uma página
+        if (categorias.length === 1 && page > 0) {
+          setPage(page - 1);
+        } else {
+          // Reajustar paginação
+          const startIndex = page * 5;
+          const endIndex = startIndex + 5;
+          setCategorias(novoTotal.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(novoTotal.length / 5));
+        }
         return;
       }
 
@@ -208,7 +302,21 @@ const Categorias = () => {
       });
       
       if (response.ok) {
+        // Remover da página atual
         setCategorias(prev => prev.filter(categoria => categoria.id !== id));
+        
+        // Se a página ficou vazia e não é a primeira, voltar uma página
+        if (categorias.length === 1 && page > 0) {
+          setPage(page - 1);
+        } else {
+          // Recarregar página atual
+          const categoriasResponse = await fetch(`http://localhost:8080/api/categorias?page=${page}&size=5`);
+          const data = await categoriasResponse.json();
+          setCategorias(data.content);
+          setTotalPages(data.totalPages);
+        }
+        
+        buscarTotalCategorias(); // Atualizar estatísticas
       } else {
         const errorText = await response.text();
         throw new Error(`Erro ao deletar categoria: ${errorText}`);
@@ -232,7 +340,7 @@ const Categorias = () => {
     return date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
   };
 
-  const novasDoMes = categorias.filter(categoria => 
+  const novasDoMes = totalCategorias.filter(categoria => 
     isSameMonth(new Date(categoria.createdAt), new Date())
   ).length;
 
@@ -314,7 +422,7 @@ const Categorias = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total de Categorias</p>
-                  <p className="text-2xl font-bold text-foreground">{categorias.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalCategorias.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <FolderOpen className="w-6 h-6 text-blue-600" />
@@ -342,7 +450,7 @@ const Categorias = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Ativas</p>
-                  <p className="text-2xl font-bold text-foreground">{categorias.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalCategorias.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Settings className="w-6 h-6 text-purple-600" />
@@ -355,7 +463,7 @@ const Categorias = () => {
         {/* Tabela de Categorias */}
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Categorias ({categorias.length} total)</CardTitle>
+            <CardTitle>Lista de Categorias ({totalCategorias.length} total)</CardTitle>
           </CardHeader>
           <CardContent>
             {categorias.length === 0 ? (
@@ -437,6 +545,23 @@ const Categorias = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Paginação */}
+        <div className="flex justify-center items-center gap-4 mt-4">
+          <Button 
+            disabled={page === 0} 
+            onClick={() => setPage(page - 1)}
+          >
+            Anterior
+          </Button>
+          <span>Página {page + 1} de {totalPages}</span>
+          <Button 
+            disabled={page + 1 >= totalPages} 
+            onClick={() => setPage(page + 1)}
+          >
+            Próxima
+          </Button>
+        </div>
 
         {/* Mensagem de erro */}
         {erro && !usingMockData && (

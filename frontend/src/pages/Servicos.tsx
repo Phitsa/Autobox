@@ -24,25 +24,55 @@ const Servicos = () => {
   const navigate = useNavigate();
   const [editingServico, setEditingServico] = useState<TypeServico | null>(null);
   const [servicos, setServicos] = useState<TypeServico[]>([]);
+  const [totalServicos, setTotalServicos] = useState<TypeServico[]>([]);
   const [categorias, setCategorias] = useState<TypeCategoria[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Buscar dados do banco
+  // Buscar serviços paginados
   useEffect(() => {
-    const buscarDados = async () => {
+    const buscarServicos = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8080/api/servicos?page=${page}&size=5`);
+        setServicos(response.data.content); // conteúdo da página
+        setTotalPages(response.data.totalPages); // total de páginas
+      } catch (error) {
+        setErro("Erro ao carregar serviços");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    buscarServicos();
+  }, [page]);
+
+  // Buscar todos os serviços para estatísticas
+  const buscarTotalServicos = async () => {
+    try {
+      const response = await axios.get<TypeServico[]>("http://localhost:8080/api/servicos/todos");
+      setTotalServicos(response.data);
+    } catch (error) {
+      console.error("Erro ao carregar total de serviços:", error);
+    }
+  };
+
+  // Buscar categorias e dados iniciais
+  useEffect(() => {
+    const buscarDadosIniciais = async () => {
       try {
         setLoading(true);
         
-        // Buscar categorias e serviços em paralelo
-        const [categoriasResponse, servicosResponse] = await Promise.all([
-          axios.get<TypeCategoria[]>("http://localhost:8080/api/categorias"),
-          axios.get<TypeServico[]>("http://localhost:8080/api/servicos")
+        // Buscar categorias e total de serviços em paralelo
+        const [categoriasResponse] = await Promise.all([
+          axios.get<TypeCategoria[]>("http://localhost:8080/api/categorias")
         ]);
         
         setCategorias(categoriasResponse.data);
-        setServicos(servicosResponse.data);
+        await buscarTotalServicos();
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
         setErro("Erro ao carregar dados do servidor");
@@ -51,7 +81,7 @@ const Servicos = () => {
       }
     };
 
-    buscarDados();
+    buscarDadosIniciais();
   }, []);
 
   if (loading) return <div className="flex justify-center items-center min-h-screen"><p>Carregando...</p></div>;
@@ -60,7 +90,18 @@ const Servicos = () => {
   const handleNovoServico = async (novoServico: Omit<TypeServico, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const response = await axios.post<TypeServico>("http://localhost:8080/api/servicos", novoServico);
-      setServicos([...servicos, response.data]);
+      
+      // Atualizar a página atual se houver espaço, senão recarregar
+      if (servicos.length < 5) {
+        setServicos(prev => [...prev, response.data]);
+      } else {
+        // Recarregar a página atual
+        const servicosResponse = await axios.get(`http://localhost:8080/api/servicos?page=${page}&size=5`);
+        setServicos(servicosResponse.data.content);
+        setTotalPages(servicosResponse.data.totalPages);
+      }
+      
+      buscarTotalServicos(); // Atualizar estatísticas
       setDialogOpen(false);
     } catch (error) {
       console.error("Erro ao criar serviço:", error);
@@ -81,9 +122,13 @@ const Servicos = () => {
         `http://localhost:8080/api/servicos/${editingServico.id}`, 
         servicoAtualizado
       );
+      
+      // Atualizar o serviço na lista atual
       setServicos(prev => 
         prev.map(serv => serv.id === editingServico.id ? response.data : serv)
       );
+      
+      buscarTotalServicos(); // Atualizar estatísticas
       setDialogOpen(false);
       setEditingServico(null);
     } catch (error) {
@@ -95,7 +140,21 @@ const Servicos = () => {
   const handleDeletarServico = async (id: number) => {
     try {
       await axios.delete(`http://localhost:8080/api/servicos/${id}`);
+      
+      // Remover da lista atual
       setServicos(prev => prev.filter(servico => servico.id !== id));
+      
+      // Se a página ficou vazia e não é a primeira, voltar uma página
+      if (servicos.length === 1 && page > 0) {
+        setPage(page - 1);
+      } else {
+        // Recarregar a página atual para ajustar
+        const servicosResponse = await axios.get(`http://localhost:8080/api/servicos?page=${page}&size=5`);
+        setServicos(servicosResponse.data.content);
+        setTotalPages(servicosResponse.data.totalPages);
+      }
+      
+      buscarTotalServicos(); // Atualizar estatísticas
     } catch (error) {
       console.error("Erro ao deletar serviço:", error);
       setErro("Erro ao deletar serviço");
@@ -123,13 +182,13 @@ const Servicos = () => {
     return categoria ? categoria.nome : 'Categoria não encontrada';
   };
 
-  const novosDoMes = servicos.filter(servico => 
+  const novosDoMes = totalServicos.filter(servico => 
     isSameMonth(parseISO(servico.createdAt), new Date())
   ).length;
 
-  const servicosAtivos = servicos.filter(servico => servico.ativo).length;
-  const precoMedio = servicos.length > 0 ? 
-    servicos.reduce((acc, s) => acc + s.preco, 0) / servicos.length : 0;
+  const servicosAtivos = totalServicos.filter(servico => servico.ativo).length;
+  const precoMedio = totalServicos.length > 0 ? 
+    totalServicos.reduce((acc, s) => acc + s.preco, 0) / totalServicos.length : 0;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -223,7 +282,7 @@ const Servicos = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total de Serviços</p>
-                  <p className="text-2xl font-bold text-foreground">{servicos.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalServicos.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Car className="w-6 h-6 text-blue-600" />
@@ -280,7 +339,7 @@ const Servicos = () => {
         {/* Tabela de Serviços */}
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Serviços ({servicos.length} total)</CardTitle>
+            <CardTitle>Lista de Serviços ({totalServicos.length} total)</CardTitle>
           </CardHeader>
           <CardContent>
             {servicos.length === 0 ? (
@@ -376,6 +435,23 @@ const Servicos = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Paginação */}
+        <div className="flex justify-center items-center gap-4 mt-4">
+          <Button 
+            disabled={page === 0} 
+            onClick={() => setPage(page - 1)}
+          >
+            Anterior
+          </Button>
+          <span>Página {page + 1} de {totalPages}</span>
+          <Button 
+            disabled={page + 1 >= totalPages} 
+            onClick={() => setPage(page + 1)}
+          >
+            Próxima
+          </Button>
+        </div>
 
         {/* Mensagem de erro */}
         {erro && (
