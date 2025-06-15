@@ -1,6 +1,8 @@
 package com.boxpro.dto.request;
 
 import com.boxpro.entity.EmpresaContatos.TipoContato;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -8,6 +10,7 @@ import jakarta.validation.constraints.Size;
 public class EmpresaContatosRequestDTO {
     
     @NotNull(message = "ID da empresa é obrigatório")
+    @JsonProperty("empresaId")
     private Long empresaId;
     
     @NotNull(message = "Tipo de contato é obrigatório")
@@ -21,10 +24,19 @@ public class EmpresaContatosRequestDTO {
     private String descricao;
     
     private Boolean principal = false;
+    
     private Boolean ativo = true;
     
-    // Construtores
-    public EmpresaContatosRequestDTO() {}
+    // Construtor padrão
+    public EmpresaContatosRequestDTO() {
+    }
+    
+    // Construtor com parâmetros principais
+    public EmpresaContatosRequestDTO(Long empresaId, TipoContato tipoContato, String valor) {
+        this.empresaId = empresaId;
+        this.tipoContato = tipoContato;
+        this.valor = valor;
+    }
     
     // Getters e Setters
     public Long getEmpresaId() {
@@ -41,6 +53,14 @@ public class EmpresaContatosRequestDTO {
     
     public void setTipoContato(TipoContato tipoContato) {
         this.tipoContato = tipoContato;
+    }
+    
+    // Setter especial para aceitar strings do frontend (em minúsculo)
+    @JsonSetter("tipoContato")
+    public void setTipoContatoFromString(String tipoContatoStr) {
+        if (tipoContatoStr != null) {
+            this.tipoContato = TipoContato.fromString(tipoContatoStr);
+        }
     }
     
     public String getValor() {
@@ -73,5 +93,17 @@ public class EmpresaContatosRequestDTO {
     
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
+    }
+    
+    @Override
+    public String toString() {
+        return "EmpresaContatosRequestDTO{" +
+                "empresaId=" + empresaId +
+                ", tipoContato=" + tipoContato +
+                ", valor='" + valor + '\'' +
+                ", descricao='" + descricao + '\'' +
+                ", principal=" + principal +
+                ", ativo=" + ativo +
+                '}';
     }
 }

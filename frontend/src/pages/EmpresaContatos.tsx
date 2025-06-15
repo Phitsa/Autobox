@@ -14,6 +14,7 @@ import {
     Smartphone,
     Printer
 } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 // Tipos corrigidos para corresponder ao backend
 interface EmpresaContato {
@@ -35,13 +36,13 @@ interface Empresa {
     nomeFantasia: string;
 }
 
-// Enum corrigido para corresponder ao backend Java
+// Enum mantido em minúsculo para o frontend (DTOs fazem a conversão)
 enum TipoContato {
-    TELEFONE = 'TELEFONE',
-    CELULAR = 'CELULAR',
-    WHATSAPP = 'WHATSAPP',
-    EMAIL = 'EMAIL',
-    FAX = 'FAX'
+    TELEFONE = 'telefone',
+    CELULAR = 'celular',
+    WHATSAPP = 'whatsapp',
+    EMAIL = 'email',
+    FAX = 'fax'
 }
 
 const tiposContato = [
@@ -95,6 +96,7 @@ const mockContatos: EmpresaContato[] = [
 ];
 
 const EmpresaContatos = () => {
+    const navigate = useNavigate();
     const [empresa, setEmpresa] = useState<Empresa | null>(null);
     const [contatos, setContatos] = useState<EmpresaContato[]>([]);
     const [novoContato, setNovoContato] = useState<Partial<EmpresaContato>>({
@@ -115,7 +117,12 @@ const EmpresaContatos = () => {
     const testarConexao = async () => {
         try {
             console.log('🔍 Testando conexão com backend...');
-            const response = await fetch('http://localhost:8080/api/empresa-contatos/status');
+            const response = await fetch('http://localhost:8080/api/empresa-contatos/status', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
             console.log('📡 Status da resposta:', response.status);
             if (response.ok) {
                 const data = await response.json();
@@ -129,38 +136,12 @@ const EmpresaContatos = () => {
         }
     };
 
-    // Função para testar rotas disponíveis
-    const testarRotasDisponiveis = async () => {
-        console.log('🧪 Testando rotas disponíveis...');
-        const routes = [
-            '/api/empresa-contatos',
-            '/api/empresa-contatos/status',
-            '/api/empresa-contatos/tipos',
-            '/actuator/health',
-            '/api/empresa'
-        ];
-
-        for (const route of routes) {
-            try {
-                const response = await fetch(`http://localhost:8080${route}`);
-                console.log(`📍 ${route} - Status: ${response.status}`);
-            } catch (error) {
-                console.log(`📍 ${route} - Erro: ${error.message}`);
-            }
-        }
-    };
-
     // Headers para requisições
     const getHeaders = () => {
-        const token = localStorage.getItem('boxpro_token');
-        const headers: HeadersInit = {
-            'Content-Type': 'application/json'
+        return {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         };
-
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        return headers;
     };
 
     // Buscar dados da empresa e contatos
@@ -169,9 +150,6 @@ const EmpresaContatos = () => {
             try {
                 setLoading(true);
                 setErro(null);
-
-                // Debug: testar todas as rotas
-                await testarRotasDisponiveis();
 
                 // Primeiro testa se o backend está rodando
                 const backendOnline = await testarConexao();
@@ -188,67 +166,94 @@ const EmpresaContatos = () => {
                 console.log('✅ Backend conectado, buscando dados reais...');
                 const headers = getHeaders();
 
-                // Primeiro, vamos tentar buscar os tipos disponíveis para debug
+                // Testar endpoint de tipos primeiro
                 try {
                     console.log('🔍 Testando endpoint de tipos...');
-                    const tiposResponse = await fetch('http://localhost:8080/api/empresa-contatos/tipos', { headers });
+                    const tiposResponse = await fetch('http://localhost:8080/api/empresa-contatos/tipos', {
+                        method: 'GET',
+                        headers
+                    });
                     if (tiposResponse.ok) {
                         const tiposData = await tiposResponse.json();
                         console.log('📋 Tipos disponíveis:', tiposData);
                     } else {
-                        console.warn('⚠️ Endpoint /tipos não disponível:', tiposResponse.status);
+                        console.warn('⚠️ Endpoint /tipos retornou erro:', tiposResponse.status);
                     }
                 } catch (error) {
                     console.warn('⚠️ Erro ao testar tipos:', error);
                 }
 
-                // Buscar dados da empresa
+                // Buscar dados da empresa - usando endpoint mock primeiro
                 console.log('🏢 Buscando dados da empresa...');
-                const empresaResponse = await fetch('http://localhost:8080/api/empresa', { headers });
+                let empresaData;
 
-                if (!empresaResponse.ok) {
-                    console.error('❌ Erro ao buscar empresa:', empresaResponse.status);
-                    throw new Error('Empresa não encontrada. Configure os dados da empresa primeiro.');
+                try {
+                    const empresaResponse = await fetch('http://localhost:8080/api/empresa/1', {
+                        method: 'GET',
+                        headers
+                    });
+
+                    if (empresaResponse.ok) {
+                        empresaData = await empresaResponse.json();
+                        console.log('🏢 Dados da empresa:', empresaData);
+                    } else {
+                        console.warn('⚠️ Endpoint /api/empresa/1 falhou, usando dados mock');
+                        empresaData = mockEmpresa;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Erro ao buscar empresa, usando mock:', error);
+                    empresaData = mockEmpresa;
                 }
 
-                const empresaData = await empresaResponse.json();
-                console.log('🏢 Dados da empresa:', empresaData);
-
                 const empresaInfo = {
-                    id: empresaData.id,
-                    nomeFantasia: empresaData.nomeFantasia || empresaData.nome_fantasia || empresaData.razao_social
+                    id: empresaData.id || 1,
+                    nomeFantasia: empresaData.nomeFantasia || empresaData.nome_fantasia || empresaData.razao_social || "BoxPro Lavagem"
                 };
                 setEmpresa(empresaInfo);
 
-                // Buscar contatos existentes - com múltiplas tentativas
-                console.log(`📞 Buscando contatos para empresa ID: ${empresaData.id}`);
+                // Buscar contatos existentes
+                console.log(`📞 Buscando contatos para empresa ID: ${empresaInfo.id}`);
 
-                // Tentativa 1: Endpoint específico da empresa
                 let contatosData = [];
                 try {
-                    const contatosResponse = await fetch(`http://localhost:8080/api/empresa-contatos/empresa/${empresaData.id}`, { headers });
-                    console.log(`📞 Resposta contatos empresa ${empresaData.id}:`, contatosResponse.status);
+                    // Tentar endpoint específico da empresa
+                    const contatosResponse = await fetch(`http://localhost:8080/api/empresa-contatos/empresa/${empresaInfo.id}`, {
+                        method: 'GET',
+                        headers
+                    });
+                    console.log(`📞 Resposta contatos empresa ${empresaInfo.id}:`, contatosResponse.status);
 
                     if (contatosResponse.ok) {
                         contatosData = await contatosResponse.json();
                         console.log('📞 Contatos recebidos:', contatosData);
+                    } else if (contatosResponse.status === 404) {
+                        console.log('📞 Nenhum contato encontrado para esta empresa');
+                        contatosData = [];
                     } else {
-                        console.warn('⚠️ Endpoint específico da empresa falhou, tentando endpoint geral...');
+                        console.warn('⚠️ Erro ao buscar contatos:', contatosResponse.status);
+                        // Tentar endpoint geral como fallback
+                        try {
+                            const todosContatosResponse = await fetch('http://localhost:8080/api/empresa-contatos', {
+                                method: 'GET',
+                                headers
+                            });
+                            console.log('📞 Resposta todos contatos:', todosContatosResponse.status);
 
-                        // Tentativa 2: Endpoint geral
-                        const todosContatosResponse = await fetch('http://localhost:8080/api/empresa-contatos', { headers });
-                        console.log('📞 Resposta todos contatos:', todosContatosResponse.status);
-
-                        if (todosContatosResponse.ok) {
-                            const todosContatos = await todosContatosResponse.json();
-                            console.log('📞 Todos os contatos:', todosContatos);
-                            // Filtrar contatos da empresa específica
-                            contatosData = todosContatos.filter(c => c.empresaId === empresaData.id);
-                            console.log('📞 Contatos filtrados:', contatosData);
+                            if (todosContatosResponse.ok) {
+                                const todosContatos = await todosContatosResponse.json();
+                                console.log('📞 Todos os contatos:', todosContatos);
+                                // Filtrar contatos da empresa específica
+                                contatosData = todosContatos.filter(c => c.empresaId === empresaInfo.id);
+                                console.log('📞 Contatos filtrados:', contatosData);
+                            }
+                        } catch (fallbackError) {
+                            console.error('❌ Erro no fallback:', fallbackError);
+                            contatosData = [];
                         }
                     }
                 } catch (error) {
                     console.error('❌ Erro ao buscar contatos:', error);
+                    contatosData = [];
                 }
 
                 setContatos(contatosData || []);
@@ -312,14 +317,14 @@ const EmpresaContatos = () => {
             // Dados corrigidos para corresponder ao DTO do backend
             const dadosParaEnviar = {
                 empresaId: empresa.id,
-                tipoContato: novoContato.tipoContato, // Enviando enum como string maiúscula
+                tipoContato: novoContato.tipoContato, // Agora envia como 'telefone', 'email', etc.
                 valor: novoContato.valor.trim(),
                 descricao: novoContato.descricao?.trim() || null,
                 principal: Boolean(novoContato.principal),
                 ativo: true
             };
 
-            console.log('Enviando dados:', dadosParaEnviar); // Debug
+            console.log('📤 Enviando dados:', dadosParaEnviar);
 
             const headers = getHeaders();
 
@@ -340,9 +345,11 @@ const EmpresaContatos = () => {
                 });
             }
 
+            console.log('📥 Resposta do servidor:', response.status);
+
             if (response.ok) {
                 const data = await response.json();
-                console.log('Resposta do servidor:', data); // Debug
+                console.log('✅ Dados recebidos:', data);
                 const contatoSalvo = data.contato;
 
                 if (editandoId) {
@@ -364,18 +371,21 @@ const EmpresaContatos = () => {
                 setEditandoId(null);
             } else {
                 const errorText = await response.text();
-                console.error('Erro da API:', errorText); // Debug
-                let errorData;
+                console.error('❌ Erro da API:', response.status, errorText);
+
+                let errorMessage = `Erro HTTP ${response.status}`;
                 try {
-                    errorData = JSON.parse(errorText);
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.error || errorData.message || errorMessage;
                 } catch {
-                    errorData = { error: errorText };
+                    errorMessage = errorText || errorMessage;
                 }
-                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+
+                throw new Error(errorMessage);
             }
 
         } catch (error) {
-            console.error("Erro ao salvar contato:", error);
+            console.error("❌ Erro ao salvar contato:", error);
             setErro(`Erro ao salvar contato: ${error.message}`);
         } finally {
             setSaving(false);
@@ -415,12 +425,12 @@ const EmpresaContatos = () => {
                 setSucesso("Contato deletado com sucesso!");
             } else {
                 const errorText = await response.text();
-                console.error('Erro ao deletar:', errorText);
+                console.error('❌ Erro ao deletar:', errorText);
                 throw new Error('Erro ao deletar contato');
             }
 
         } catch (error) {
-            console.error("Erro ao deletar contato:", error);
+            console.error("❌ Erro ao deletar contato:", error);
             setErro(`Erro ao deletar contato: ${error.message}`);
         }
     };
@@ -445,7 +455,7 @@ const EmpresaContatos = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Resposta definir principal:', data);
+                console.log('✅ Resposta definir principal:', data);
                 const contatoAtualizado = data.contato;
 
                 // Atualizar lista local
@@ -456,12 +466,12 @@ const EmpresaContatos = () => {
                 setSucesso("Contato definido como principal!");
             } else {
                 const errorText = await response.text();
-                console.error('Erro ao definir principal:', errorText);
+                console.error('❌ Erro ao definir principal:', errorText);
                 throw new Error('Erro ao definir contato como principal');
             }
 
         } catch (error) {
-            console.error("Erro ao definir principal:", error);
+            console.error("❌ Erro ao definir principal:", error);
             setErro(`Erro ao definir contato como principal: ${error.message}`);
         }
     };
@@ -502,8 +512,7 @@ const EmpresaContatos = () => {
     };
 
     const handleVoltarConfiguracoes = () => {
-        // Simula navegação
-        alert('Voltando para configurações...');
+        navigate('/configuracoes');
     };
 
     // Auto-clear messages
@@ -723,16 +732,16 @@ const EmpresaContatos = () => {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${contato.tipoContato === TipoContato.TELEFONE ? 'bg-blue-100' :
-                                                                contato.tipoContato === TipoContato.CELULAR ? 'bg-green-100' :
-                                                                    contato.tipoContato === TipoContato.WHATSAPP ? 'bg-green-100' :
-                                                                        contato.tipoContato === TipoContato.EMAIL ? 'bg-purple-100' :
-                                                                            'bg-gray-100'
+                                                            contato.tipoContato === TipoContato.CELULAR ? 'bg-green-100' :
+                                                                contato.tipoContato === TipoContato.WHATSAPP ? 'bg-green-100' :
+                                                                    contato.tipoContato === TipoContato.EMAIL ? 'bg-purple-100' :
+                                                                        'bg-gray-100'
                                                             }`}>
                                                             <IconeContato className={`w-5 h-5 ${contato.tipoContato === TipoContato.TELEFONE ? 'text-blue-600' :
-                                                                    contato.tipoContato === TipoContato.CELULAR ? 'text-green-600' :
-                                                                        contato.tipoContato === TipoContato.WHATSAPP ? 'text-green-600' :
-                                                                            contato.tipoContato === TipoContato.EMAIL ? 'text-purple-600' :
-                                                                                'text-gray-600'
+                                                                contato.tipoContato === TipoContato.CELULAR ? 'text-green-600' :
+                                                                    contato.tipoContato === TipoContato.WHATSAPP ? 'text-green-600' :
+                                                                        contato.tipoContato === TipoContato.EMAIL ? 'text-purple-600' :
+                                                                            'text-gray-600'
                                                                 }`} />
                                                         </div>
 

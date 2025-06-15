@@ -1,38 +1,53 @@
 package com.boxpro.dto.response;
 
 import com.boxpro.entity.EmpresaContatos;
-import com.boxpro.entity.EmpresaContatos.TipoContato;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
 public class EmpresaContatosResponseDTO {
     
     private Long id;
+    
+    @JsonProperty("empresaId")
     private Long empresaId;
-    private String nomeEmpresa;
-    private TipoContato tipoContato;
+    
+    @JsonProperty("tipoContato")
+    private String tipoContato; // Sempre retornará em minúsculo para o frontend
+    
+    @JsonProperty("nomeTipoContato")
     private String nomeTipoContato;
+    
     private String valor;
+    
+    @JsonProperty("valorFormatado")
     private String valorFormatado;
+    
     private String descricao;
+    
     private Boolean principal;
+    
     private Boolean ativo;
     
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonProperty("createdAt")
     private LocalDateTime createdAt;
     
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonProperty("updatedAt")
     private LocalDateTime updatedAt;
     
-    // Construtores
-    public EmpresaContatosResponseDTO() {}
+    // Construtor padrão
+    public EmpresaContatosResponseDTO() {
+    }
     
+    // Construtor a partir da entidade
     public EmpresaContatosResponseDTO(EmpresaContatos contato) {
         this.id = contato.getId();
-        this.empresaId = contato.getEmpresa().getId();
-        this.nomeEmpresa = contato.getEmpresa().getNomeFantasia();
-        this.tipoContato = contato.getTipoContato();
+        this.empresaId = contato.getEmpresa() != null ? contato.getEmpresa().getId() : null;
+        
+        // IMPORTANTE: Converter enum maiúsculo do banco para minúsculo do frontend
+        this.tipoContato = contato.getTipoContato() != null ? 
+            contato.getTipoContato().name().toLowerCase() : null;
+            
         this.nomeTipoContato = contato.getNomeTipoContato();
         this.valor = contato.getValor();
         this.valorFormatado = contato.getValorFormatado();
@@ -60,19 +75,11 @@ public class EmpresaContatosResponseDTO {
         this.empresaId = empresaId;
     }
     
-    public String getNomeEmpresa() {
-        return nomeEmpresa;
-    }
-    
-    public void setNomeEmpresa(String nomeEmpresa) {
-        this.nomeEmpresa = nomeEmpresa;
-    }
-    
-    public TipoContato getTipoContato() {
+    public String getTipoContato() {
         return tipoContato;
     }
     
-    public void setTipoContato(TipoContato tipoContato) {
+    public void setTipoContato(String tipoContato) {
         this.tipoContato = tipoContato;
     }
     
@@ -138,5 +145,17 @@ public class EmpresaContatosResponseDTO {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    @Override
+    public String toString() {
+        return "EmpresaContatosResponseDTO{" +
+                "id=" + id +
+                ", empresaId=" + empresaId +
+                ", tipoContato='" + tipoContato + '\'' +
+                ", valor='" + valor + '\'' +
+                ", principal=" + principal +
+                ", ativo=" + ativo +
+                '}';
     }
 }

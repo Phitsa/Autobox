@@ -54,14 +54,13 @@ public class EmpresaContatos {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Enum para tipos de contato
-    // Enum para tipos de contato - CORRIGIDO para corresponder ao banco
+    // Enum corrigido para corresponder EXATAMENTE ao banco de dados (MAIÚSCULO)
     public enum TipoContato {
-        telefone("telefone", "Telefone"),
-        celular("celular", "Celular"),
-        whatsapp("whatsapp", "WhatsApp"),
-        email("email", "E-mail"),
-        fax("fax", "Fax");
+        TELEFONE("TELEFONE", "Telefone"),
+        CELULAR("CELULAR", "Celular"), 
+        WHATSAPP("WHATSAPP", "WhatsApp"),
+        EMAIL("EMAIL", "E-mail"),
+        FAX("FAX", "Fax");
 
         private final String codigo;
         private final String nome;
@@ -81,11 +80,41 @@ public class EmpresaContatos {
 
         public static TipoContato fromCodigo(String codigo) {
             for (TipoContato tipo : values()) {
-                if (tipo.codigo.equals(codigo)) {
+                if (tipo.codigo.equalsIgnoreCase(codigo)) {
                     return tipo;
                 }
             }
             throw new IllegalArgumentException("Código de tipo de contato inválido: " + codigo);
+        }
+
+        // Método para compatibilidade com strings em qualquer case
+        public static TipoContato fromString(String str) {
+            if (str == null) return null;
+            
+            // Converter para maiúscula e tentar match direto
+            String upperStr = str.toUpperCase();
+            
+            for (TipoContato tipo : values()) {
+                if (tipo.name().equals(upperStr) || tipo.codigo.equals(upperStr)) {
+                    return tipo;
+                }
+            }
+            
+            // Fallback para compatibilidade com versões antigas (minúsculas do frontend)
+            switch (upperStr) {
+                case "TELEFONE": return TELEFONE;
+                case "CELULAR": return CELULAR;
+                case "WHATSAPP": return WHATSAPP;
+                case "EMAIL": return EMAIL;
+                case "FAX": return FAX;
+                default:
+                    throw new IllegalArgumentException("Tipo de contato inválido: " + str);
+            }
+        }
+
+        // Método para retornar valor em minúscula (compatibilidade com frontend)
+        public String getValorFrontend() {
+            return this.name().toLowerCase();
         }
     }
 
@@ -180,14 +209,16 @@ public class EmpresaContatos {
     }
 
     public String getValorFormatado() {
-        if (tipoContato == TipoContato.telefone || tipoContato == TipoContato.celular
-                || tipoContato == TipoContato.whatsapp) {
+        if (tipoContato == TipoContato.TELEFONE || tipoContato == TipoContato.CELULAR
+                || tipoContato == TipoContato.WHATSAPP || tipoContato == TipoContato.FAX) {
             return formatarTelefone(valor);
         }
         return valor;
     }
 
     private String formatarTelefone(String telefone) {
+        if (telefone == null) return null;
+        
         String numbers = telefone.replaceAll("\\D", "");
         if (numbers.length() == 11) {
             return String.format("(%s) %s-%s",
@@ -201,5 +232,18 @@ public class EmpresaContatos {
                     numbers.substring(6));
         }
         return telefone;
+    }
+
+    @Override
+    public String toString() {
+        return "EmpresaContatos{" +
+                "id=" + id +
+                ", empresaId=" + (empresa != null ? empresa.getId() : null) +
+                ", tipoContato=" + tipoContato +
+                ", valor='" + valor + '\'' +
+                ", descricao='" + descricao + '\'' +
+                ", principal=" + principal +
+                ", ativo=" + ativo +
+                '}';
     }
 }
