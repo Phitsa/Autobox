@@ -26,11 +26,13 @@ const Clientes = () => {
   const navigate = useNavigate();
   const [editingCliente, setEditingCliente] = useState<TypeCliente | null>(null);
   const [clientes, setClientes] = useState<TypeCliente[]>([]);
+  const [totalClientes, setTotalClientes] = useState<TypeCliente[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  
 
 
   useEffect(() => {
@@ -38,7 +40,6 @@ const Clientes = () => {
       try {
         const response = await axios.get(`http://localhost:8080/api/clientes?page=${page}&size=5`);
         setClientes(response.data.content); // conteúdo da página
-        setTotalPages(3); // total de páginas
       } catch (error) {
         setErro("Erro ao carregar clientes");
         console.error(error);
@@ -49,6 +50,18 @@ const Clientes = () => {
 
     buscarClientes();
   }, [page]);
+  const buscarTotalClientes = async () => {
+        try {
+          const response = await axios.get<TypeCliente[]>("http://localhost:8080/api/clientes/todos");
+          setTotalClientes(response.data);
+          setTotalPages(Math.ceil(response.data.length / 5)); // Atualiza o total de páginas com base no tamanho da página
+        } catch (error) {
+          console.error("Erro ao carregar total de clientes:", error);
+        }
+      };
+  useEffect(() => {
+    buscarTotalClientes();
+  }, []);
 
   const handleAtualizarCliente = async (clienteAtualizado: TypeCliente) => {
     try {
@@ -78,6 +91,7 @@ const Clientes = () => {
       const response = await axios.post<TypeCliente>("http://localhost:8080/api/clientes", novoCliente);
       setClientes(prev => [...prev, response.data]);
       setDialogOpen(false);
+      buscarTotalClientes();
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
     }
@@ -90,7 +104,15 @@ const Clientes = () => {
     };
 
     const handleDeletarCliente = (id: number) => {
-    setClientes((prev) => prev.filter((cliente) => cliente.id !== id));
+      axios.delete(`http://localhost:8080/api/clientes/delete/${id}`)
+        .then(() => {
+          setClientes(prev => prev.filter(cliente => cliente.id !== id));
+          buscarTotalClientes(); // Atualiza a lista total de clientes
+          console.log('Deletando cliente com ID:', id);
+        })
+        .catch(error => {
+          console.error("Erro ao deletar cliente:", error);
+        });
     };
 
     const handleVoltarAdmin = () => {
@@ -100,10 +122,10 @@ const Clientes = () => {
     const formatarData = (data: string) => {
       return new Date(data).toLocaleDateString('pt-BR');
     };
-    const novosDoMes = clientes.filter(cliente => 
-    isSameMonth(parseISO(cliente.dataCriacao), new Date())
+    const novosDoMes = totalClientes.filter(totalClientes => 
+    isSameMonth(parseISO(totalClientes.dataCriacao), new Date())
   ).length;
-
+    const crescimentoPercentual = `${((novosDoMes / totalClientes.length) * 100)}%`;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -159,7 +181,7 @@ const Clientes = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total de Clientes</p>
-                  <p className="text-2xl font-bold text-foreground">{clientes.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalClientes.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Users className="w-6 h-6 text-blue-600" />
@@ -183,19 +205,19 @@ const Clientes = () => {
             </CardContent>
           </Card>
 
-          <Card>
+           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Ativos</p>
-                  <p className="text-2xl font-bold text-foreground">{clientes.length}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Crecimento percentual no mês</p>
+                  <p className="text-2xl font-bold text-foreground">{crescimentoPercentual}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Users className="w-6 h-6 text-purple-600" />
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> 
         </div>
 
         {/* Tabela de Clientes */}

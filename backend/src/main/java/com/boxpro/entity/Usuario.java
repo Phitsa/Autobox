@@ -20,7 +20,7 @@ public class Usuario {
     @Column(length = 15)
     private String telefone;
 
-    @Column(length = 14)
+    @Column(length = 14, unique = true)
     private String cpf;
 
     @Column(name = "data_criacao", nullable = false)

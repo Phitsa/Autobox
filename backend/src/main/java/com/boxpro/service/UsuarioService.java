@@ -32,9 +32,13 @@ public class UsuarioService {
         return usuarioRepository.save(clienteExistente);
     }
     
-    public Page<Usuario> listarTodos(int page, int size) {
+    public Page<Usuario> listPage(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return usuarioRepository.findAll(pageable);
+    }
+
+    public List<Usuario> listarTodos() {
+        return usuarioRepository.findAll();
     }
 
     public Optional<Usuario> buscarPorEmail(String email) {
