@@ -78,4 +78,22 @@ public class VeiculoService {
         Page<Veiculo> veiculosPage = veiculoRepository.findByClienteId(clienteId, pageable);
         return veiculosPage.map(VeiculoMapper::toDTO);
     }
+
+    public VeiculoResponseDTO editarVeiculo(Long id, VeiculoRequestDTO dto) {
+        Veiculo veiculo = veiculoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Veículo não encontrado para edição"));
+
+        Usuario cliente = usuarioRepository.findById(dto.getClienteId())
+            .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+
+        veiculo.setMarca(dto.getMarca());
+        veiculo.setModelo(dto.getModelo());
+        veiculo.setAno(dto.getAno());
+        veiculo.setPlaca(dto.getPlaca());
+        veiculo.setCor(dto.getCor());
+        veiculo.setCliente(cliente);
+
+        Veiculo salvo = veiculoRepository.save(veiculo);
+        return VeiculoMapper.toDTO(salvo);
+    }
 }

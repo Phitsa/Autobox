@@ -26,7 +26,9 @@ public class VeiculoMapper {
             veiculo.getAno(),
             veiculo.getPlaca(),
             veiculo.getCor(),
-            veiculo.getCliente().getNome()
+            veiculo.getCliente().getNome(),
+            veiculo.getCliente().getId(),
+            veiculo.getDataCriacao()
         );
     }
 }

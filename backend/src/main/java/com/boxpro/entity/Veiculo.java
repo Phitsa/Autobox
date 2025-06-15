@@ -31,7 +31,7 @@ public class Veiculo {
     private String modelo;
 
     @NotNull
-    private int ano;
+    private Integer ano;
 
     @NotBlank
     @Size(min = 7,max = 7)

@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +30,7 @@ public class VeiculoController {
     private VeiculoService veiculoService;
 
     @PostMapping("/adicionar")
-    public ResponseEntity<VeiculoResponseDTO> adicionar(@RequestBody VeiculoRequestDTO dto) {
+    public ResponseEntity<VeiculoResponseDTO> adicionar(@RequestBody VeiculoRequestDTO dto){
         System.out.println("DTO completo no controller: " + dto);
         System.out.println("ClienteId recebido no Controller: " + dto.getClienteId());
         VeiculoResponseDTO veiculoSalvo = veiculoService.adicionarVeiculo(dto);
@@ -47,6 +50,18 @@ public class VeiculoController {
         List<VeiculoResponseDTO> veiculos = veiculoService.listarTodosVeiculos();
         return ResponseEntity.ok(veiculos);
     }
+
+    @PutMapping("/editar/{id}")
+    public ResponseEntity<VeiculoResponseDTO> editar(
+            @PathVariable Long id, 
+            @RequestBody VeiculoRequestDTO dto) {
+        
+        System.out.println("ID do veículo para edição: " + id);
+        System.out.println("DTO de edição recebido: " + dto);
+        
+        VeiculoResponseDTO veiculoEditado = veiculoService.editarVeiculo(id, dto);
+        return ResponseEntity.ok(veiculoEditado);
+    };
 
     // Remover veículo
     @DeleteMapping("/remover/{id}")
@@ -72,19 +87,14 @@ public class VeiculoController {
         return ResponseEntity.ok(veiculosPage);
     }
 
-
-
-    // Verificar se a placa existe
     @GetMapping("/placa/existe/{placa}")
     public ResponseEntity<Boolean> placaExiste(@PathVariable String placa) {
         boolean existe = veiculoService.placaExiste(placa);
         return ResponseEntity.ok(existe);
     }
-    
-    // Buscar veículo por placa
     @GetMapping("/placa/{placa}")
     public ResponseEntity<VeiculoResponseDTO> buscarPorPlaca(@PathVariable String placa) {
         VeiculoResponseDTO veiculo = veiculoService.buscarVeiculoPorPlaca(placa);
         return ResponseEntity.ok(veiculo);
-    } 
+    };
 }

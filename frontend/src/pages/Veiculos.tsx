@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Car, Calendar, ArrowLeft, Edit, Trash2, User, Hash } from 'lucide-react';
-import FormVeiculo from '@/components/vehicle/FormVeiculo';
+import FormVeiculo from '@/components/Vehicle/FormVeiculo';
 import { parseISO, isSameMonth } from 'date-fns';
 import {
   AlertDialog,
@@ -65,10 +65,25 @@ const Veiculos = () => {
 
   const handleAtualizarVeiculo = async (veiculoAtualizado: any, id?: number) => {
     try {
-      const response = await axios.put<TypeVeiculo>(
-        `http://localhost:8080/api/veiculos/editar/${id || editingVeiculo?.id}`,
-        veiculoAtualizado
-      );
+      // Construir query parameters
+      const params = new URLSearchParams({
+        clienteId: veiculoAtualizado.clienteId.toString(),
+        marca: veiculoAtualizado.marca,
+        modelo: veiculoAtualizado.modelo,
+        ano: veiculoAtualizado.ano.toString(),
+        placa: veiculoAtualizado.placa,
+        cor: veiculoAtualizado.cor
+      });
+
+      const url = `http://localhost:8080/api/veiculos/editar/${id || editingVeiculo?.id}?${params.toString()}`;
+
+      console.log('URL de edição:', url);
+
+      const response = await axios.put<TypeVeiculo>(url, {}, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
 
       // Atualiza o veículo na lista
       setVeiculos(prev =>
@@ -78,8 +93,11 @@ const Veiculos = () => {
       setDialogOpen(false);
       setEditingVeiculo(null);
       buscarTotalVeiculos();
+      
+      console.log('Veículo atualizado com sucesso:', response.data);
     } catch (error) {
       console.error("Erro ao atualizar veículo:", error);
+      // Adicionar toast de erro se disponível
     }
   };
 
@@ -104,7 +122,7 @@ const Veiculos = () => {
   };
 
   const handleDeletarVeiculo = (id: number) => {
-    axios.delete(`http://localhost:8080/api/veiculos/delete/${id}`)
+    axios.delete(`http://localhost:8080/api/veiculos/remover/${id}`)
       .then(() => {
         setVeiculos(prev => prev.filter(veiculo => veiculo.id !== id));
         buscarTotalVeiculos(); // Atualiza a lista total de veículos
@@ -138,6 +156,15 @@ const Veiculos = () => {
     
     return coresMap[cor.toLowerCase()] || '#808080';
   };
+
+  const novoEsteMes = totalVeiculos.filter(veiculo => {
+    const dataCriacao = parseISO(veiculo.dataCriacao);
+    const hoje = new Date();
+    return isSameMonth(dataCriacao, hoje);
+  });
+  const totalNovosEsteMes = novoEsteMes.length;
+
+  const crescimentoPercentual = `${((totalNovosEsteMes / totalVeiculos.length) * 100)}%`;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -207,7 +234,7 @@ const Veiculos = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Novos este mês</p>
-                  <p className="text-2xl font-bold text-foreground">oioi</p>
+                  <p className="text-2xl font-bold text-foreground">{totalNovosEsteMes}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <Calendar className="w-6 h-6 text-green-600" />
@@ -221,7 +248,7 @@ const Veiculos = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Crescimento percentual no mês</p>
-                  <p className="text-2xl font-bold text-foreground">oioi</p>
+                  <p className="text-2xl font-bold text-foreground">{crescimentoPercentual}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Car className="w-6 h-6 text-purple-600" />
@@ -281,8 +308,8 @@ const Veiculos = () => {
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <div>
-                            <p className="text-sm">{veiculo.nomeCliente || `Cliente ${veiculo.clienteId}`}</p>
-                            <p className="text-xs text-muted-foreground">ID: {veiculo.clienteId}</p>
+                            <p className="text-sm">{veiculo.nomeCliente}</p>
+                            <p className="text-xs text-muted-foreground">ID: {veiculo.clientId}</p>
                           </div>
                         </div>
                       </TableCell>

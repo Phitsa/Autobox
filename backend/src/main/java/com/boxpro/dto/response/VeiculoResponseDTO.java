@@ -1,18 +1,22 @@
 package com.boxpro.dto.response;
 
+import java.time.LocalDateTime;
+
 public class VeiculoResponseDTO {
     
     private Long id;
     private String marca;
     private String modelo;
-    private int ano;
+    private Integer ano;
     private String placa;
     private String cor;
     private String nomeCliente;
+    private Long clientId;
+    private LocalDateTime dataCriacao;
 
     public VeiculoResponseDTO() {}
 
-    public VeiculoResponseDTO(Long id, String marca, String modelo, int ano, String placa, String cor, String nomeCliente) {
+    public VeiculoResponseDTO(Long id, String marca, String modelo, Integer ano, String placa, String cor, String nomeCliente, Long clientId, LocalDateTime dataCriacao) {
         this.id = id;
         this.marca = marca;
         this.modelo = modelo;
@@ -20,6 +24,8 @@ public class VeiculoResponseDTO {
         this.placa = placa;
         this.cor = cor;
         this.nomeCliente = nomeCliente;
+        this.clientId = clientId;
+        this.dataCriacao = dataCriacao;
     }
 
     public Long getId() {return id;}
@@ -31,8 +37,8 @@ public class VeiculoResponseDTO {
     public String getModelo() {return modelo;}
     public void setModelo(String modelo) {this.modelo = modelo;}
 
-    public int getAno() {return ano;}
-    public void setAno(int ano) {this.ano = ano;}
+    public Integer getAno() {return ano;}
+    public void setAno(Integer ano) {this.ano = ano;}
 
     public String getPlaca() {return placa;}
     public void setPlaca(String placa) {this.placa = placa;}
@@ -42,5 +48,11 @@ public class VeiculoResponseDTO {
 
     public String getNomeCliente() {return nomeCliente;}
     public void setNomeCliente(String nomeCliente) {this.nomeCliente = nomeCliente;}
+
+    public Long getClientId() {return clientId;}
+    public void setClientId(Long clientId) {this.clientId = clientId;}
+
+    public LocalDateTime getDataCriacao() { return dataCriacao;}
+    public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
 
 }
