@@ -192,15 +192,15 @@ public class EmpresaContatosService {
         TipoContato tipo = dto.getTipoContato();
         
         switch (tipo) {
-            case EMAIL:
+            case email:
                 if (!valor.matches("^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$")) {
                     throw new BusinessException("Formato de e-mail inválido");
                 }
                 break;
-            case TELEFONE:
-            case CELULAR:
-            case WHATSAPP:
-            case FAX:
+            case telefone:
+            case celular:
+            case whatsapp:
+            case fax:
                 String numbers = valor.replaceAll("\\D", "");
                 if (numbers.length() < 10 || numbers.length() > 11) {
                     throw new BusinessException("Telefone deve conter entre 10 e 11 dígitos");

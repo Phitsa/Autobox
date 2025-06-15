@@ -14,7 +14,6 @@ import {
     Smartphone,
     Printer
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 // Tipos corrigidos para corresponder ao backend
 interface EmpresaContato {
@@ -36,7 +35,7 @@ interface Empresa {
     nomeFantasia: string;
 }
 
-// Enum corrigido para corresponder EXATAMENTE ao backend Java
+// Enum corrigido para corresponder ao backend Java
 enum TipoContato {
     TELEFONE = 'TELEFONE',
     CELULAR = 'CELULAR',
@@ -105,7 +104,6 @@ const EmpresaContatos = () => {
         principal: false,
         ativo: true
     });
-    const navigate = useNavigate();
     const [editandoId, setEditandoId] = useState<number | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
@@ -116,10 +114,39 @@ const EmpresaContatos = () => {
     // Função para testar conexão com o backend
     const testarConexao = async () => {
         try {
+            console.log('🔍 Testando conexão com backend...');
             const response = await fetch('http://localhost:8080/api/empresa-contatos/status');
-            return response.ok;
-        } catch (error) {
+            console.log('📡 Status da resposta:', response.status);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Backend respondeu:', data);
+                return true;
+            }
             return false;
+        } catch (error) {
+            console.error('❌ Erro na conexão:', error);
+            return false;
+        }
+    };
+
+    // Função para testar rotas disponíveis
+    const testarRotasDisponiveis = async () => {
+        console.log('🧪 Testando rotas disponíveis...');
+        const routes = [
+            '/api/empresa-contatos',
+            '/api/empresa-contatos/status',
+            '/api/empresa-contatos/tipos',
+            '/actuator/health',
+            '/api/empresa'
+        ];
+
+        for (const route of routes) {
+            try {
+                const response = await fetch(`http://localhost:8080${route}`);
+                console.log(`📍 ${route} - Status: ${response.status}`);
+            } catch (error) {
+                console.log(`📍 ${route} - Erro: ${error.message}`);
+            }
         }
     };
 
@@ -143,11 +170,14 @@ const EmpresaContatos = () => {
                 setLoading(true);
                 setErro(null);
 
+                // Debug: testar todas as rotas
+                await testarRotasDisponiveis();
+
                 // Primeiro testa se o backend está rodando
                 const backendOnline = await testarConexao();
 
                 if (!backendOnline) {
-                    console.warn("Backend não está disponível, usando dados mock");
+                    console.warn("🚫 Backend não está disponível, usando dados mock");
                     setEmpresa(mockEmpresa);
                     setContatos(mockContatos);
                     setUsingMockData(true);
@@ -155,38 +185,81 @@ const EmpresaContatos = () => {
                     return;
                 }
 
+                console.log('✅ Backend conectado, buscando dados reais...');
                 const headers = getHeaders();
 
+                // Primeiro, vamos tentar buscar os tipos disponíveis para debug
+                try {
+                    console.log('🔍 Testando endpoint de tipos...');
+                    const tiposResponse = await fetch('http://localhost:8080/api/empresa-contatos/tipos', { headers });
+                    if (tiposResponse.ok) {
+                        const tiposData = await tiposResponse.json();
+                        console.log('📋 Tipos disponíveis:', tiposData);
+                    } else {
+                        console.warn('⚠️ Endpoint /tipos não disponível:', tiposResponse.status);
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Erro ao testar tipos:', error);
+                }
+
                 // Buscar dados da empresa
+                console.log('🏢 Buscando dados da empresa...');
                 const empresaResponse = await fetch('http://localhost:8080/api/empresa', { headers });
 
                 if (!empresaResponse.ok) {
+                    console.error('❌ Erro ao buscar empresa:', empresaResponse.status);
                     throw new Error('Empresa não encontrada. Configure os dados da empresa primeiro.');
                 }
 
                 const empresaData = await empresaResponse.json();
+                console.log('🏢 Dados da empresa:', empresaData);
+
                 const empresaInfo = {
                     id: empresaData.id,
-                    nomeFantasia: empresaData.nomeFantasia || empresaData.nome_fantasia
+                    nomeFantasia: empresaData.nomeFantasia || empresaData.nome_fantasia || empresaData.razao_social
                 };
                 setEmpresa(empresaInfo);
 
-                // Buscar contatos existentes
-                const contatosResponse = await fetch(`http://localhost:8080/api/empresa-contatos/empresa/${empresaData.id}`, { headers });
+                // Buscar contatos existentes - com múltiplas tentativas
+                console.log(`📞 Buscando contatos para empresa ID: ${empresaData.id}`);
 
-                if (contatosResponse.ok) {
-                    const contatosData = await contatosResponse.json();
-                    console.log('Contatos recebidos:', contatosData); // Debug
-                    setContatos(contatosData);
-                } else {
-                    console.warn('Erro ao buscar contatos:', contatosResponse.status);
-                    setContatos([]);
+                // Tentativa 1: Endpoint específico da empresa
+                let contatosData = [];
+                try {
+                    const contatosResponse = await fetch(`http://localhost:8080/api/empresa-contatos/empresa/${empresaData.id}`, { headers });
+                    console.log(`📞 Resposta contatos empresa ${empresaData.id}:`, contatosResponse.status);
+
+                    if (contatosResponse.ok) {
+                        contatosData = await contatosResponse.json();
+                        console.log('📞 Contatos recebidos:', contatosData);
+                    } else {
+                        console.warn('⚠️ Endpoint específico da empresa falhou, tentando endpoint geral...');
+
+                        // Tentativa 2: Endpoint geral
+                        const todosContatosResponse = await fetch('http://localhost:8080/api/empresa-contatos', { headers });
+                        console.log('📞 Resposta todos contatos:', todosContatosResponse.status);
+
+                        if (todosContatosResponse.ok) {
+                            const todosContatos = await todosContatosResponse.json();
+                            console.log('📞 Todos os contatos:', todosContatos);
+                            // Filtrar contatos da empresa específica
+                            contatosData = todosContatos.filter(c => c.empresaId === empresaData.id);
+                            console.log('📞 Contatos filtrados:', contatosData);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao buscar contatos:', error);
                 }
 
+                setContatos(contatosData || []);
                 setUsingMockData(false);
 
+                if (contatosData.length === 0) {
+                    setSucesso('Conexão estabelecida! Você pode começar a adicionar contatos.');
+                }
+
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
+                console.error("❌ Erro ao carregar dados:", error);
                 setEmpresa(mockEmpresa);
                 setContatos(mockContatos);
                 setUsingMockData(true);
@@ -301,7 +374,7 @@ const EmpresaContatos = () => {
                 throw new Error(errorData.error || `Erro HTTP ${response.status}`);
             }
 
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erro ao salvar contato:", error);
             setErro(`Erro ao salvar contato: ${error.message}`);
         } finally {
@@ -346,7 +419,7 @@ const EmpresaContatos = () => {
                 throw new Error('Erro ao deletar contato');
             }
 
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erro ao deletar contato:", error);
             setErro(`Erro ao deletar contato: ${error.message}`);
         }
@@ -387,7 +460,7 @@ const EmpresaContatos = () => {
                 throw new Error('Erro ao definir contato como principal');
             }
 
-        } catch (error: any) {
+        } catch (error) {
             console.error("Erro ao definir principal:", error);
             setErro(`Erro ao definir contato como principal: ${error.message}`);
         }
@@ -429,7 +502,8 @@ const EmpresaContatos = () => {
     };
 
     const handleVoltarConfiguracoes = () => {
-        navigate('/configuracoes');
+        // Simula navegação
+        alert('Voltando para configurações...');
     };
 
     // Auto-clear messages
@@ -648,20 +722,18 @@ const EmpresaContatos = () => {
                                             <div key={contato.id} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                            contato.tipoContato === TipoContato.TELEFONE ? 'bg-blue-100' :
-                                                            contato.tipoContato === TipoContato.CELULAR ? 'bg-green-100' :
-                                                            contato.tipoContato === TipoContato.WHATSAPP ? 'bg-green-100' :
-                                                            contato.tipoContato === TipoContato.EMAIL ? 'bg-purple-100' :
-                                                            'bg-gray-100'
-                                                        }`}>
-                                                            <IconeContato className={`w-5 h-5 ${
-                                                                contato.tipoContato === TipoContato.TELEFONE ? 'text-blue-600' :
-                                                                contato.tipoContato === TipoContato.CELULAR ? 'text-green-600' :
-                                                                contato.tipoContato === TipoContato.WHATSAPP ? 'text-green-600' :
-                                                                contato.tipoContato === TipoContato.EMAIL ? 'text-purple-600' :
-                                                                'text-gray-600'
-                                                            }`} />
+                                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${contato.tipoContato === TipoContato.TELEFONE ? 'bg-blue-100' :
+                                                                contato.tipoContato === TipoContato.CELULAR ? 'bg-green-100' :
+                                                                    contato.tipoContato === TipoContato.WHATSAPP ? 'bg-green-100' :
+                                                                        contato.tipoContato === TipoContato.EMAIL ? 'bg-purple-100' :
+                                                                            'bg-gray-100'
+                                                            }`}>
+                                                            <IconeContato className={`w-5 h-5 ${contato.tipoContato === TipoContato.TELEFONE ? 'text-blue-600' :
+                                                                    contato.tipoContato === TipoContato.CELULAR ? 'text-green-600' :
+                                                                        contato.tipoContato === TipoContato.WHATSAPP ? 'text-green-600' :
+                                                                            contato.tipoContato === TipoContato.EMAIL ? 'text-purple-600' :
+                                                                                'text-gray-600'
+                                                                }`} />
                                                         </div>
 
                                                         <div className="flex-1">
