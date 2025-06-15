@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,16 @@ public class FuncionarioService {
     @PostConstruct
     public void init() {
         System.out.println("✅ FuncionarioService carregado!");
+    }
+
+    // Método paginado
+    public Page<Funcionario> listarFuncionariosPaginados(Pageable pageable) {
+        return funcionarioRepository.findAll(pageable);
+    }
+
+    // Método para listar todos (para estatísticas)
+    public List<Funcionario> listarFuncionarios() {
+        return funcionarioRepository.findAll();
     }
 
     public Funcionario criarFuncionario(Funcionario funcionario) {
@@ -64,10 +76,6 @@ public class FuncionarioService {
         }
 
         return funcionarioRepository.save(funcionario);
-    }
-
-    public List<Funcionario> listarFuncionarios() {
-        return funcionarioRepository.findAll();
     }
 
     public List<Funcionario> listarFuncionariosAtivos() {

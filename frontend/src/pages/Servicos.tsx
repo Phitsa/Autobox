@@ -68,13 +68,14 @@ const Servicos = () => {
         
         // Buscar categorias e total de serviços em paralelo
         const [categoriasResponse] = await Promise.all([
-          axios.get<TypeCategoria[]>("http://localhost:8080/api/categorias")
+          axios.get<TypeCategoria[]>("http://localhost:8080/api/categorias/todas")
         ]);
         
-        setCategorias(categoriasResponse.data);
+        setCategorias(categoriasResponse.data || []); // Garantir que seja um array
         await buscarTotalServicos();
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
+        setCategorias([]); // Definir como array vazio em caso de erro
         setErro("Erro ao carregar dados do servidor");
       } finally {
         setLoading(false);
@@ -178,17 +179,21 @@ const Servicos = () => {
   };
 
   const getCategoriaNome = (categoriaId: number) => {
+    // Verificar se categorias é um array antes de usar find
+    if (!Array.isArray(categorias) || categorias.length === 0) {
+      return 'Carregando...';
+    }
     const categoria = categorias.find(c => c.id === categoriaId);
     return categoria ? categoria.nome : 'Categoria não encontrada';
   };
 
   const novosDoMes = totalServicos.filter(servico => 
-    isSameMonth(parseISO(servico.createdAt), new Date())
+    servico.createdAt && isSameMonth(parseISO(servico.createdAt), new Date())
   ).length;
 
   const servicosAtivos = totalServicos.filter(servico => servico.ativo).length;
   const precoMedio = totalServicos.length > 0 ? 
-    totalServicos.reduce((acc, s) => acc + s.preco, 0) / totalServicos.length : 0;
+    totalServicos.reduce((acc, s) => acc + (s.preco || 0), 0) / totalServicos.length : 0;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -245,7 +250,7 @@ const Servicos = () => {
                 <ServicoForm 
                   onSubmit={editingServico ? handleAtualizarServico : handleNovoServico} 
                   initialData={editingServico}
-                  categorias={categorias}
+                  categorias={Array.isArray(categorias) ? categorias : []}
                 />
               </DialogContent>
             </Dialog>
@@ -253,7 +258,7 @@ const Servicos = () => {
         </div>
 
         {/* Alerta sobre Categorias (opcional) */}
-        {categorias.length === 0 && (
+        {Array.isArray(categorias) && categorias.length === 0 && !loading && (
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Settings className="w-5 h-5 text-yellow-600" />

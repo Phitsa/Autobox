@@ -215,11 +215,14 @@ const Funcionarios = () => {
   
   const [editingFuncionario, setEditingFuncionario] = useState<TypeFuncionario | null>(null);
   const [funcionarios, setFuncionarios] = useState<TypeFuncionario[]>([]);
+  const [totalFuncionarios, setTotalFuncionarios] = useState<TypeFuncionario[]>([]);
   const [stats, setStats] = useState<TypeFuncionarioStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [usingMockData, setUsingMockData] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Função para testar conexão com o backend
   const testarConexao = async () => {
@@ -231,13 +234,10 @@ const Funcionarios = () => {
     }
   };
 
-  // Buscar funcionários do banco com fallback - APENAS UMA VEZ
+  // Buscar funcionários paginados
   useEffect(() => {
     const buscarFuncionarios = async () => {
       try {
-        setLoading(true);
-        setErro(null);
-        
         // Verificar se o usuário é ADMIN
         const userStr = localStorage.getItem('boxpro_user');
         if (userStr) {
@@ -256,8 +256,12 @@ const Funcionarios = () => {
         
         if (!backendOnline) {
           console.warn("Backend não está disponível, usando dados mock");
-          setFuncionarios(mockFuncionarios);
-          setStats(mockStats);
+          // Simular paginação com dados mock
+          const startIndex = page * 5;
+          const endIndex = startIndex + 5;
+          const paginatedMock = mockFuncionarios.slice(startIndex, endIndex);
+          setFuncionarios(paginatedMock);
+          setTotalPages(Math.ceil(mockFuncionarios.length / 5));
           setUsingMockData(true);
           setErro("⚠️ Usando dados de demonstração - Backend não conectado");
           return;
@@ -273,27 +277,25 @@ const Funcionarios = () => {
           headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const [funcionariosResponse, statsResponse] = await Promise.all([
-          fetch('http://localhost:8080/api/funcionarios', { headers }),
-          fetch('http://localhost:8080/api/funcionarios/stats', { headers })
-        ]);
+        const response = await fetch(`http://localhost:8080/api/funcionarios?page=${page}&size=5`, { headers });
         
-        if (!funcionariosResponse.ok || !statsResponse.ok) {
-          throw new Error(`Erro HTTP: ${funcionariosResponse.status}`);
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status}`);
         }
         
-        const funcionariosData = await funcionariosResponse.json();
-        const statsData = await statsResponse.json();
-        
-        setFuncionarios(funcionariosData);
-        setStats(statsData);
+        const data = await response.json();
+        setFuncionarios(data.content);
+        setTotalPages(data.totalPages);
         setUsingMockData(false);
         
       } catch (error) {
         console.error("Erro ao carregar funcionários:", error);
-        // Em caso de erro, usa dados mock
-        setFuncionarios(mockFuncionarios);
-        setStats(mockStats);
+        // Em caso de erro, usa dados mock paginados
+        const startIndex = page * 5;
+        const endIndex = startIndex + 5;
+        const paginatedMock = mockFuncionarios.slice(startIndex, endIndex);
+        setFuncionarios(paginatedMock);
+        setTotalPages(Math.ceil(mockFuncionarios.length / 5));
         setUsingMockData(true);
         setErro("⚠️ Erro de conexão - Usando dados de demonstração");
       } finally {
@@ -302,13 +304,60 @@ const Funcionarios = () => {
     };
 
     buscarFuncionarios();
-  }, []); // Array vazio - executa APENAS uma vez
+  }, [page, navigate]);
+
+  // Buscar todos os funcionários para estatísticas
+  const buscarTotalFuncionarios = async () => {
+    try {
+      const backendOnline = await testarConexao();
+      
+      if (!backendOnline) {
+        setTotalFuncionarios(mockFuncionarios);
+        setStats(mockStats);
+        return;
+      }
+
+      const token = localStorage.getItem('boxpro_token');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const [funcionariosResponse, statsResponse] = await Promise.all([
+        fetch('http://localhost:8080/api/funcionarios/todos', { headers }),
+        fetch('http://localhost:8080/api/funcionarios/stats', { headers })
+      ]);
+      
+      if (funcionariosResponse.ok && statsResponse.ok) {
+        const funcionariosData = await funcionariosResponse.json();
+        const statsData = await statsResponse.json();
+        
+        setTotalFuncionarios(funcionariosData);
+        setStats(statsData);
+      } else {
+        setTotalFuncionarios(mockFuncionarios);
+        setStats(mockStats);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar total de funcionários:", error);
+      setTotalFuncionarios(mockFuncionarios);
+      setStats(mockStats);
+    }
+  };
+
+  // Buscar dados iniciais
+  useEffect(() => {
+    buscarTotalFuncionarios();
+  }, []);
 
   const handleNovoFuncionario = async (novoFuncionario: TypeFuncionarioForm) => {
     try {
       if (usingMockData) {
         // Modo mock
-        const novoId = Math.max(...funcionarios.map(f => f.id)) + 1;
+        const novoId = Math.max(...totalFuncionarios.map(f => f.id)) + 1;
         const funcionario: TypeFuncionario = {
           ...novoFuncionario,
           id: novoId,
@@ -318,8 +367,21 @@ const Funcionarios = () => {
           tentativasLogin: 0,
           bloqueado: false
         };
-        setFuncionarios([...funcionarios, funcionario]);
-        setDialogOpen(false);
+        
+        // Atualizar dados totais
+        const novoTotal = [...totalFuncionarios, funcionario];
+        setTotalFuncionarios(novoTotal);
+        
+        // Atualizar página atual se houver espaço
+        if (funcionarios.length < 5) {
+          setFuncionarios(prev => [...prev, funcionario]);
+        } else {
+          // Simular recarregamento da página
+          const startIndex = page * 5;
+          const endIndex = startIndex + 5;
+          setFuncionarios(novoTotal.slice(startIndex, endIndex));
+          setTotalPages(Math.ceil(novoTotal.length / 5));
+        }
         
         // Atualizar stats
         if (stats) {
@@ -331,6 +393,8 @@ const Funcionarios = () => {
             [tipoKey]: (stats[tipoKey as keyof TypeFuncionarioStats] as number) + 1
           });
         }
+        
+        setDialogOpen(false);
         return;
       }
 
@@ -348,24 +412,30 @@ const Funcionarios = () => {
       if (response.ok) {
         const responseData = await response.json();
         const novoFuncionarioData = responseData.funcionario || responseData;
-        setFuncionarios([...funcionarios, novoFuncionarioData]);
-        setDialogOpen(false);
         
-        // Atualizar stats localmente
-        if (stats) {
-          const tipoKey = novoFuncionario.tipoFuncionario.toLowerCase() + 's';
-          setStats({
-            ...stats,
-            total: stats.total + 1,
-            ativos: stats.ativos + 1,
-            [tipoKey]: (stats[tipoKey as keyof TypeFuncionarioStats] as number) + 1
+        // Atualizar página atual se houver espaço
+        if (funcionarios.length < 5) {
+          setFuncionarios(prev => [...prev, novoFuncionarioData]);
+        } else {
+          // Recarregar página atual
+          const funcionariosResponse = await fetch(`http://localhost:8080/api/funcionarios?page=${page}&size=5`, {
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { 'Authorization': `Bearer ${token}` })
+            }
           });
+          const data = await funcionariosResponse.json();
+          setFuncionarios(data.content);
+          setTotalPages(data.totalPages);
         }
+        
+        buscarTotalFuncionarios(); // Atualizar estatísticas
+        setDialogOpen(false);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Erro ao criar funcionário');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao criar funcionário:", error);
       setErro(`Erro ao criar funcionário: ${error.message}`);
     }
@@ -382,13 +452,24 @@ const Funcionarios = () => {
     try {
       if (usingMockData) {
         // Modo mock
-        setFuncionarios(prev => 
-          prev.map(func => 
-            func.id === editingFuncionario.id 
-              ? { ...func, ...funcionarioAtualizado, dataAtualizacao: new Date().toISOString(), ativo: true }
-              : func
-          )
+        const funcionarioEditado = {
+          ...editingFuncionario,
+          ...funcionarioAtualizado,
+          dataAtualizacao: new Date().toISOString(),
+          ativo: true
+        };
+        
+        // Atualizar dados totais
+        const novoTotal = totalFuncionarios.map(func => 
+          func.id === editingFuncionario.id ? funcionarioEditado : func
         );
+        setTotalFuncionarios(novoTotal);
+        
+        // Atualizar página atual
+        setFuncionarios(prev => 
+          prev.map(func => func.id === editingFuncionario.id ? funcionarioEditado : func)
+        );
+        
         setDialogOpen(false);
         setEditingFuncionario(null);
         return;
@@ -426,16 +507,20 @@ const Funcionarios = () => {
       if (response.ok) {
         const responseData = await response.json();
         const funcionarioAtualizadoData = responseData.funcionario || responseData;
+        
+        // Atualizar página atual
         setFuncionarios(prev => 
           prev.map(func => func.id === editingFuncionario.id ? funcionarioAtualizadoData : func)
         );
+        
+        buscarTotalFuncionarios(); // Atualizar estatísticas
         setDialogOpen(false);
         setEditingFuncionario(null);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Erro ao atualizar funcionário');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar funcionário:", error);
       setErro(`Erro ao atualizar funcionário: ${error.message}`);
     }
@@ -445,6 +530,12 @@ const Funcionarios = () => {
     try {
       if (usingMockData) {
         // Modo mock
+        const novoTotal = totalFuncionarios.map(func => 
+          func.id === id ? { ...func, ativo: false } : func
+        );
+        setTotalFuncionarios(novoTotal);
+        
+        // Atualizar página atual
         setFuncionarios(prev => prev.map(func => 
           func.id === id ? { ...func, ativo: false } : func
         ));
@@ -469,22 +560,17 @@ const Funcionarios = () => {
       });
       
       if (response.ok) {
+        // Atualizar página atual
         setFuncionarios(prev => prev.map(func => 
           func.id === id ? { ...func, ativo: false } : func
         ));
         
-        if (stats) {
-          setStats({
-            ...stats,
-            ativos: stats.ativos - 1,
-            inativos: stats.inativos + 1
-          });
-        }
+        buscarTotalFuncionarios(); // Atualizar estatísticas
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Erro ao desativar funcionário');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao desativar funcionário:", error);
       setErro(`Erro ao desativar funcionário: ${error.message}`);
     }
@@ -494,6 +580,11 @@ const Funcionarios = () => {
     try {
       if (usingMockData) {
         // Modo mock
+        const novoTotal = totalFuncionarios.map(func => 
+          func.id === id ? { ...func, bloqueado: bloquear } : func
+        );
+        setTotalFuncionarios(novoTotal);
+        
         setFuncionarios(prev => 
           prev.map(func => 
             func.id === id ? { ...func, bloqueado: bloquear } : func
@@ -522,7 +613,7 @@ const Funcionarios = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || `Erro ao ${bloquear ? 'bloquear' : 'desbloquear'} funcionário`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Erro ao ${bloquear ? 'bloquear' : 'desbloquear'} funcionário:`, error);
       setErro(`Erro ao ${bloquear ? 'bloquear' : 'desbloquear'} funcionário: ${error.message}`);
     }
@@ -530,11 +621,16 @@ const Funcionarios = () => {
 
   const handleReativarFuncionario = async (id: number) => {
     try {
-      const funcionario = funcionarios.find(f => f.id === id);
+      const funcionario = totalFuncionarios.find(f => f.id === id);
       if (!funcionario) return;
 
       if (usingMockData) {
         // Modo mock
+        const novoTotal = totalFuncionarios.map(func => 
+          func.id === id ? { ...func, ativo: true } : func
+        );
+        setTotalFuncionarios(novoTotal);
+        
         setFuncionarios(prev => 
           prev.map(func => func.id === id ? { ...func, ativo: true } : func)
         );
@@ -576,22 +672,17 @@ const Funcionarios = () => {
       if (response.ok) {
         const responseData = await response.json();
         const funcionarioReativado = responseData.funcionario || responseData;
+        
         setFuncionarios(prev => 
           prev.map(func => func.id === id ? { ...funcionarioReativado, ativo: true } : func)
         );
         
-        if (stats) {
-          setStats({
-            ...stats,
-            ativos: stats.ativos + 1,
-            inativos: stats.inativos - 1
-          });
-        }
+        buscarTotalFuncionarios(); // Atualizar estatísticas
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Erro ao reativar funcionário');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao reativar funcionário:", error);
       setErro(`Erro ao reativar funcionário: ${error.message}`);
     }
@@ -613,8 +704,8 @@ const Funcionarios = () => {
     return tipo === 'ADMIN' ? 'text-purple-600' : 'text-blue-600';
   };
 
-  const novosDoMes = funcionarios.filter(funcionario => 
-    isSameMonth(parseISO(funcionario.dataCriacao), new Date())
+  const novosDoMes = totalFuncionarios.filter(funcionario => 
+    funcionario.dataCriacao && isSameMonth(parseISO(funcionario.dataCriacao), new Date())
   ).length;
 
   if (loading) {
@@ -752,7 +843,7 @@ const Funcionarios = () => {
         {/* Tabela de Funcionários */}
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Funcionários ({funcionarios.length} total)</CardTitle>
+            <CardTitle>Lista de Funcionários ({totalFuncionarios.length} total)</CardTitle>
           </CardHeader>
           <CardContent>
             {funcionarios.length === 0 ? (
@@ -763,10 +854,11 @@ const Funcionarios = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <div className="w-full">
-                  <div className="grid grid-cols-7 gap-4 p-4 bg-muted/50 rounded-t-lg font-medium text-sm">
+                <div className="min-w-[1200px]">
+                  <div className="grid grid-cols-8 gap-4 p-4 bg-muted/50 rounded-t-lg font-medium text-sm">
                     <div>Nome</div>
                     <div>Email</div>
+                    <div>Telefone</div>
                     <div>Tipo</div>
                     <div>Status</div>
                     <div>Último Login</div>
@@ -774,14 +866,12 @@ const Funcionarios = () => {
                     <div>Ações</div>
                   </div>
                   {funcionarios.map((funcionario) => (
-                    <div key={funcionario.id} className="grid grid-cols-7 gap-4 p-4 border-b hover:bg-muted/30 transition-colors">
-                      <div>
-                        <div className="font-medium">{funcionario.nome}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {funcionario.telefone || 'Sem telefone'}
-                        </div>
+                    <div key={funcionario.id} className="grid grid-cols-8 gap-4 p-4 border-b hover:bg-muted/30 transition-colors">
+                      <div className="text-sm font-medium">{funcionario.nome}</div>
+                      <div className="text-sm break-words mr-2">{funcionario.email}</div>
+                      <div className="text-sm break-words">
+                        {funcionario.telefone || 'Não informado'}
                       </div>
-                      <div className="text-sm">{funcionario.email}</div>
                       <div className={`text-sm font-medium ${getTipoColor(funcionario.tipoFuncionario)}`}>
                         {getTipoLabel(funcionario.tipoFuncionario)}
                       </div>
@@ -878,6 +968,23 @@ const Funcionarios = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Paginação */}
+        <div className="flex justify-center items-center gap-4 mt-4">
+          <Button 
+            disabled={page === 0} 
+            onClick={() => setPage(page - 1)}
+          >
+            Anterior
+          </Button>
+          <span>Página {page + 1} de {totalPages}</span>
+          <Button 
+            disabled={page + 1 >= totalPages} 
+            onClick={() => setPage(page + 1)}
+          >
+            Próxima
+          </Button>
+        </div>
 
         {/* Mensagem de erro */}
         {erro && !usingMockData && (

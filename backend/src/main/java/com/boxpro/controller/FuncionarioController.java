@@ -4,6 +4,10 @@ import com.boxpro.entity.Funcionario;
 import com.boxpro.entity.enums.TipoFuncionario;
 import com.boxpro.service.FuncionarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,7 +35,8 @@ public class FuncionarioController {
         response.put("message", "✅ FuncionarioController funcionando!");
         response.put("timestamp", System.currentTimeMillis());
         response.put("endpoints", List.of(
-            "GET /api/funcionarios - Listar todos",
+            "GET /api/funcionarios - Listar com paginação",
+            "GET /api/funcionarios/todos - Listar todos",
             "GET /api/funcionarios/{id} - Buscar por ID",
             "POST /api/funcionarios - Criar funcionário",
             "PUT /api/funcionarios/{id} - Atualizar funcionário",
@@ -42,7 +47,29 @@ public class FuncionarioController {
 
     // ===== CRUD BÁSICO (ADMIN ONLY) =====
 
+    // Endpoint paginado para a lista principal
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<Funcionario>> listarFuncionarios(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "dataCriacao") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.Direction.DESC : Sort.Direction.ASC;
+            
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+            Page<Funcionario> funcionarios = funcionarioService.listarFuncionariosPaginados(pageable);
+            return ResponseEntity.ok(funcionarios);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Endpoint para buscar todos os funcionários (para estatísticas)
+    @GetMapping("/todos")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Funcionario>> listarTodos() {
         try {

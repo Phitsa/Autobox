@@ -1,4 +1,4 @@
-package com.boxpro.dto;
+package com.boxpro.dto.response;
 
 import com.boxpro.entity.enums.TipoFuncionario;
 import java.time.LocalDateTime;
