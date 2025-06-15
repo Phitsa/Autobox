@@ -16,6 +16,7 @@ import Servicos from "./pages/Servicos";
 import Funcionarios from './pages/Funcionarios';
 import Configuracoes from "./pages/Configuracoes";
 import EmpresaHorarios from "./pages/EmpresaHorarios";
+import EmpresaContatos from "./pages/EmpresaContatos";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <EmpresaHorarios />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empresa-contatos"
+          element={
+            <ProtectedRoute>
+              <EmpresaContatos />
             </ProtectedRoute>
           }
         />
