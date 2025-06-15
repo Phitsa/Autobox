@@ -29,13 +29,16 @@ const Clientes = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
 
   useEffect(() => {
     const buscarClientes = async () => {
       try {
-        const response = await axios.get<TypeCliente[]>("http://localhost:8080/api/clientes");
-        setClientes(response.data);
+        const response = await axios.get(`http://localhost:8080/api/clientes?page=${page}&size=5`);
+        setClientes(response.data.content); // conteúdo da página
+        setTotalPages(3); // total de páginas
       } catch (error) {
         setErro("Erro ao carregar clientes");
         console.error(error);
@@ -45,42 +48,61 @@ const Clientes = () => {
     };
 
     buscarClientes();
-  }, []);
+  }, [page]);
+
+  const handleAtualizarCliente = async (clienteAtualizado: TypeCliente) => {
+    try {
+      const response = await axios.put<TypeCliente>(
+        `http://localhost:8080/api/clientes/editar/${clienteAtualizado.id}`,
+        clienteAtualizado
+      );
+
+      // Atualiza o cliente na lista
+      setClientes(prev =>
+        prev.map(c => (c.id === response.data.id ? response.data : c))
+      );
+
+      setDialogOpen(false);
+      setEditingCliente(null);
+    } catch (error) {
+      console.error("Erro ao atualizar cliente:", error);
+    }
+  };
 
   if (loading) return <p>Carregando...</p>;
   if (erro) return <p className="text-red-600">{erro}</p>;
 
 
-  const handleNovoCliente = (novoCliente: Omit<TypeCliente, 'id' | 'dataCriacao'>) => {
-    const cliente: TypeCliente = {
-      ...novoCliente,
-      id: clientes.length + 1,
-      dataCriacao: new Date().toISOString().split('T')[0]
-    };
-    setClientes([...clientes, cliente]);
-    setDialogOpen(false);
+  const handleNovoCliente = async (novoCliente: Omit<TypeCliente, 'id' | 'dataCriacao'>) => {
+    try {
+      const response = await axios.post<TypeCliente>("http://localhost:8080/api/clientes", novoCliente);
+      setClientes(prev => [...prev, response.data]);
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao criar cliente:", error);
+    }
   };
 
   const handleEditarCliente = (cliente: TypeCliente) => {
-  setEditingCliente(cliente);
-  setDialogOpen(true);
-  };
+    console.log('Cliente selecionado para editar:', cliente);
+    setEditingCliente(cliente);
+    setDialogOpen(true);
+    };
 
-  const handleDeletarCliente = (id: number) => {
-  setClientes((prev) => prev.filter((cliente) => cliente.id !== id));
-  };
+    const handleDeletarCliente = (id: number) => {
+    setClientes((prev) => prev.filter((cliente) => cliente.id !== id));
+    };
 
-  const handleVoltarAdmin = () => {
-    navigate('/admin');
-  };
+    const handleVoltarAdmin = () => {
+      navigate('/admin');
+    };
 
-  const formatarData = (data: string) => {
-    return new Date(data).toLocaleDateString('pt-BR');
-  };
-
-  const novosDoMes = clientes.filter(cliente => 
-  isSameMonth(parseISO(cliente.dataCriacao), new Date())
-).length;
+    const formatarData = (data: string) => {
+      return new Date(data).toLocaleDateString('pt-BR');
+    };
+    const novosDoMes = clientes.filter(cliente => 
+    isSameMonth(parseISO(cliente.dataCriacao), new Date())
+  ).length;
 
 
   return (
@@ -123,8 +145,8 @@ const Clientes = () => {
                 </DialogTitle>
               </DialogHeader>
               <ClienteForm 
-                onSubmit={handleNovoCliente} 
-                initialData={editingCliente}
+                onSubmit={editingCliente ? handleAtualizarCliente : handleNovoCliente}
+                clienteEditando={editingCliente}
               />
             </DialogContent>
           </Dialog>
@@ -267,7 +289,23 @@ const Clientes = () => {
           </CardContent>
         </Card>
       </div>
+      <div className="flex justify-center items-center gap-4 mt-4">
+        <Button 
+          disabled={page === 0} 
+          onClick={() => setPage(page - 1)}
+        >
+          Anterior
+        </Button>
+        <span>Página {page + 1} de {totalPages}</span>
+        <Button 
+          disabled={page + 1 >= totalPages} 
+          onClick={() => setPage(page + 1)}
+        >
+          Próxima
+        </Button>
+      </div>
     </div>
+    
   );
 };
 

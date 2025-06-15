@@ -2,13 +2,14 @@ package com.boxpro.service;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.boxpro.entity.Usuario;
 import com.boxpro.repository.UsuarioRepository;
-
 @Service
 public class UsuarioService {
     
@@ -16,25 +17,24 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
 
     public Usuario criarCliente(Usuario cliente) {
-        // cliente.setAtivo(true);
         return usuarioRepository.save(cliente);
     }
 
-    public List<Usuario> listarClientes() {
-        return usuarioRepository.findAll();
+    public Usuario editarCliente(Long id, Usuario cliente) {
+        Usuario clienteExistente = usuarioRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Cliente não encontrado para edição"));
+
+        clienteExistente.setNome(cliente.getNome());
+        clienteExistente.setEmail(cliente.getEmail());
+        clienteExistente.setTelefone(cliente.getTelefone());
+        clienteExistente.setCpf(cliente.getCpf());
+
+        return usuarioRepository.save(clienteExistente);
     }
-
-    public Optional<Usuario> alterarCliente(Usuario cliente) {
-        if (cliente.getId() == null) {
-            return Optional.empty();
-        }
-
-        Optional<Usuario> existente = usuarioRepository.findById(cliente.getId());
-        if (existente.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.of(usuarioRepository.save(cliente));
+    
+    public Page<Usuario> listarTodos(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return usuarioRepository.findAll(pageable);
     }
 
     public Optional<Usuario> buscarPorEmail(String email) {
@@ -60,4 +60,12 @@ public class UsuarioService {
     public boolean cpfExiste(String cpf) {
         return usuarioRepository.existsByCpf(cpf);
     }
+
+    public void removerCliente(Long id) {
+        if (!usuarioRepository.existsById(id)) {
+            throw new RuntimeException("Cliente não encontrado para remoção");
+        }
+        usuarioRepository.deleteById(id);
+    }
+    
 }
