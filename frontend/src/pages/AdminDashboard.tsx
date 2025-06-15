@@ -40,6 +40,15 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleConfiguracoesClick = () => {
+    if (isAdmin) {
+      navigate('/configuracoes');
+    } else {
+      // Apenas mostrar que não tem acesso, mas não navegar
+      alert('Acesso restrito! Apenas administradores podem acessar as configurações.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -145,7 +154,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Card de Funcionários - Modificado */}
+          {/* Card de Funcionários - Com Restrição */}
           <div
             className={`rounded-lg shadow-md transition-shadow cursor-pointer ${isAdmin
                 ? 'bg-white hover:shadow-lg'
@@ -211,20 +220,52 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+          {/* Card de Configurações - Com Restrição ADMIN */}
+          <div
+            className={`rounded-lg shadow-md transition-shadow cursor-pointer ${isAdmin
+                ? 'bg-white hover:shadow-lg'
+                : 'bg-gray-100 opacity-75'
+              }`}
+            onClick={handleConfiguracoesClick}
+          >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Settings className="w-6 h-6 text-gray-600" />
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isAdmin
+                    ? 'bg-gray-100'
+                    : 'bg-gray-200'
+                  }`}>
+                  {isAdmin ? (
+                    <Settings className="w-6 h-6 text-gray-600" />
+                  ) : (
+                    <Lock className="w-6 h-6 text-gray-500" />
+                  )}
                 </div>
-                <Button size="sm" variant="outline" onClick={() => navigate('/configuracoes')}>
-                  Acessar
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!isAdmin}
+                  className={!isAdmin ? 'opacity-60' : ''}
+                >
+                  {isAdmin ? 'Acessar' : 'Restrito'}
                 </Button>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Configurações</h3>
-              <p className="text-gray-600 text-sm">
-                Ajuste configurações do sistema, usuários e permissões.
+              <h3 className={`text-lg font-semibold mb-2 ${isAdmin ? 'text-gray-900' : 'text-gray-500'
+                }`}>
+                Configurações
+              </h3>
+              <p className={`text-sm ${isAdmin ? 'text-gray-600' : 'text-gray-400'
+                }`}>
+                {isAdmin
+                  ? 'Ajuste configurações do sistema, empresa, horários e contatos.'
+                  : 'Acesso restrito apenas para administradores.'
+                }
               </p>
+              {!isAdmin && (
+                <div className="mt-2 flex items-center text-xs text-gray-500">
+                  <Lock className="w-3 h-3 mr-1" />
+                  <span>Apenas ADMIN</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -15,6 +15,7 @@ import Categorias from "./pages/Categorias";
 import Servicos from "./pages/Servicos";
 import Funcionarios from './pages/Funcionarios';
 import Configuracoes from "./pages/Configuracoes";
+import EmpresaHorarios from "./pages/EmpresaHorarios";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Configuracoes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/empresa-horarios"
+          element={
+            <ProtectedRoute>
+              <EmpresaHorarios />
             </ProtectedRoute>
           }
         />

@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Settings, Save, AlertCircle, Building2, MapPin, FileText } from 'lucide-react';
+import { ArrowLeft, Settings, Save, AlertCircle, Building2, MapPin, FileText, Clock, Phone } from 'lucide-react';
 
 // Tipos
 interface TypeEmpresa {
   id?: number;
-  nomeFantasia: string;
-  razaoSocial: string;
+  nome_fantasia: string;
+  razao_social: string;
   descricao?: string;
   cnpj?: string;
-  inscricaoEstadual?: string;
-  inscricaoMunicipal?: string;
+  inscricao_estadual?: string;
+  inscricao_municipal?: string;
   endereco?: string;
   cep?: string;
   cidade?: string;
@@ -27,12 +27,12 @@ interface TypeEmpresa {
 // Mock data como fallback
 const mockEmpresa: TypeEmpresa = {
   id: 1,
-  nomeFantasia: "BoxPro Lavagem",
-  razaoSocial: "BoxPro Serviços Automotivos LTDA",
+  nome_fantasia: "BoxPro Lavagem",
+  razao_social: "BoxPro Serviços Automotivos LTDA",
   descricao: "Lavagem e detalhamento automotivo com excelência e qualidade",
   cnpj: "12.345.678/0001-90",
-  inscricaoEstadual: "123456789",
-  inscricaoMunicipal: "987654321",
+  inscricao_estadual: "123456789",
+  inscricao_municipal: "987654321",
   endereco: "Rua das Flores",
   cep: "59000-000",
   cidade: "Natal",
@@ -48,12 +48,12 @@ const Configuracoes = () => {
   const navigate = useNavigate();
   
   const [empresa, setEmpresa] = useState<TypeEmpresa>({
-    nomeFantasia: '',
-    razaoSocial: '',
+    nome_fantasia: '',
+    razao_social: '',
     descricao: '',
     cnpj: '',
-    inscricaoEstadual: '',
-    inscricaoMunicipal: '',
+    inscricao_estadual: '',
+    inscricao_municipal: '',
     endereco: '',
     cep: '',
     cidade: '',
@@ -138,21 +138,23 @@ const Configuracoes = () => {
         const empresaData = await response.json();
         
         // Garantir que todos os campos sejam strings em vez de null
+        // E mapear corretamente camelCase (backend) para snake_case (frontend)
         const empresaLimpa = {
           ...empresaData,
-          nomeFantasia: empresaData.nomeFantasia || '',
-          razaoSocial: empresaData.razaoSocial || '',
+          nome_fantasia: empresaData.nomeFantasia || empresaData.nome_fantasia || '',
+          razao_social: empresaData.razaoSocial || empresaData.razao_social || '',
           descricao: empresaData.descricao || '',
           cnpj: empresaData.cnpj || '',
-          inscricaoEstadual: empresaData.inscricaoEstadual || '',
-          inscricaoMunicipal: empresaData.inscricaoMunicipal || '',
+          inscricao_estadual: empresaData.inscricaoEstadual || empresaData.inscricao_estadual || '',
+          inscricao_municipal: empresaData.inscricaoMunicipal || empresaData.inscricao_municipal || '',
           endereco: empresaData.endereco || '',
           cep: empresaData.cep || '',
           cidade: empresaData.cidade || '',
           estado: empresaData.estado || '',
           numero: empresaData.numero || '',
           complemento: empresaData.complemento || '',
-          ativo: empresaData.ativo !== undefined ? empresaData.ativo : true
+          ativo: empresaData.ativo !== undefined ? empresaData.ativo : true,
+          id: empresaData.id
         };
         
         setEmpresa(empresaLimpa);
@@ -194,12 +196,12 @@ const Configuracoes = () => {
 
       // Preparar dados para envio
       const dadosParaEnviar = {
-        nomeFantasia: empresa.nomeFantasia,
-        razaoSocial: empresa.razaoSocial,
+        nomeFantasia: empresa.nome_fantasia,
+        razaoSocial: empresa.razao_social,
         descricao: empresa.descricao || null,
         cnpj: empresa.cnpj || null,
-        inscricaoEstadual: empresa.inscricaoEstadual || null,
-        inscricaoMunicipal: empresa.inscricaoMunicipal || null,
+        inscricaoEstadual: empresa.inscricao_estadual || null,
+        inscricaoMunicipal: empresa.inscricao_municipal || null,
         endereco: empresa.endereco || null,
         cep: empresa.cep || null,
         cidade: empresa.cidade || null,
@@ -209,10 +211,6 @@ const Configuracoes = () => {
         ativo: empresa.ativo
       };
 
-      console.log('📤 Dados sendo enviados:', dadosParaEnviar);
-      console.log('🏢 Empresa existe?', empresaExiste);
-      console.log('🆔 ID da empresa:', empresa.id);
-
       const token = localStorage.getItem('boxpro_token');
       const headers: HeadersInit = {
         'Content-Type': 'application/json'
@@ -221,8 +219,6 @@ const Configuracoes = () => {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-
-      console.log('🔑 Headers sendo enviados:', headers);
 
       let response;
       let url;
@@ -238,32 +234,25 @@ const Configuracoes = () => {
         method = 'POST';
       }
 
-      console.log(`🌐 Fazendo ${method} para: ${url}`);
-
       response = await fetch(url, {
         method,
         headers,
         body: JSON.stringify(dadosParaEnviar),
       });
 
-      console.log('📨 Response status:', response.status);
-      console.log('📨 Response ok:', response.ok);
-
       if (response.ok) {
         const responseData = await response.json();
-        console.log('✅ Resposta do servidor:', responseData);
-        
         const empresaSalva = responseData.empresa || responseData;
         
         // Garantir que todos os campos sejam strings em vez de null
         const empresaLimpa = {
           ...empresaSalva,
-          nomeFantasia: empresaSalva.nomeFantasia || empresaSalva.nomeFantasia || '',
-          razaoSocial: empresaSalva.razaoSocial || empresaSalva.razaoSocial || '',
+          nome_fantasia: empresaSalva.nomeFantasia || empresaSalva.nome_fantasia || '',
+          razao_social: empresaSalva.razaoSocial || empresaSalva.razao_social || '',
           descricao: empresaSalva.descricao || '',
           cnpj: empresaSalva.cnpj || '',
-          inscricaoEstadual: empresaSalva.inscricaoEstadual || empresaSalva.inscricaoEstadual || '',
-          inscricaoMunicipal: empresaSalva.inscricaoMunicipal || empresaSalva.inscricaoMunicipal || '',
+          inscricao_estadual: empresaSalva.inscricaoEstadual || empresaSalva.inscricao_estadual || '',
+          inscricao_municipal: empresaSalva.inscricaoMunicipal || empresaSalva.inscricao_municipal || '',
           endereco: empresaSalva.endereco || '',
           cep: empresaSalva.cep || '',
           cidade: empresaSalva.cidade || '',
@@ -274,29 +263,21 @@ const Configuracoes = () => {
           id: empresaSalva.id
         };
         
-        console.log('🔄 Dados limpos para state:', empresaLimpa);
-        
         setEmpresa(empresaLimpa);
         setEmpresaExiste(true);
         setSucesso(empresaExiste ? "Empresa atualizada com sucesso!" : "Empresa criada com sucesso!");
       } else {
         const errorText = await response.text();
-        console.error('❌ Erro da resposta (texto):', errorText);
-        
         let errorData;
         try {
           errorData = JSON.parse(errorText);
-          console.error('❌ Erro da resposta (JSON):', errorData);
         } catch (parseError) {
-          console.error('❌ Erro ao fazer parse do JSON:', parseError);
           errorData = { error: errorText };
         }
         
         throw new Error(errorData.error || errorData.message || `Erro ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      console.error("❌ Erro completo:", error);
-      console.error("❌ Stack trace:", error.stack);
       setErro(`Erro ao salvar empresa: ${error.message}`);
     } finally {
       setSaving(false);
@@ -431,8 +412,8 @@ const Configuracoes = () => {
                     type="text"
                     required
                     className="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                    value={empresa.nomeFantasia}
-                    onChange={(e) => handleInputChange('nomeFantasia', e.target.value)}
+                    value={empresa.nome_fantasia}
+                    onChange={(e) => handleInputChange('nome_fantasia', e.target.value)}
                     placeholder="Nome comercial da empresa"
                   />
                 </div>
@@ -443,8 +424,8 @@ const Configuracoes = () => {
                     type="text"
                     required
                     className="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                    value={empresa.razaoSocial}
-                    onChange={(e) => handleInputChange('razaoSocial', e.target.value)}
+                    value={empresa.razao_social}
+                    onChange={(e) => handleInputChange('razao_social', e.target.value)}
                     placeholder="Razão social conforme CNPJ"
                   />
                 </div>
@@ -495,8 +476,8 @@ const Configuracoes = () => {
                   <input
                     type="text"
                     className="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                    value={empresa.inscricaoEstadual || ''}
-                    onChange={(e) => handleInputChange('inscricaoEstadual', e.target.value)}
+                    value={empresa.inscricao_estadual || ''}
+                    onChange={(e) => handleInputChange('inscricao_estadual', e.target.value)}
                     placeholder="Inscrição estadual"
                     maxLength={20}
                   />
@@ -507,8 +488,8 @@ const Configuracoes = () => {
                   <input
                     type="text"
                     className="w-full p-3 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                    value={empresa.inscricaoMunicipal || ''}
-                    onChange={(e) => handleInputChange('inscricaoMunicipal', e.target.value)}
+                    value={empresa.inscricao_municipal || ''}
+                    onChange={(e) => handleInputChange('inscricao_municipal', e.target.value)}
                     placeholder="Inscrição municipal"
                     maxLength={20}
                   />
@@ -610,6 +591,72 @@ const Configuracoes = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Seção de Configurações Avançadas */}
+          {empresaExiste && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Configurações Avançadas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Botão Horários */}
+                  <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">Horários de Funcionamento</h4>
+                        <p className="text-sm text-gray-600">Configure os horários para cada dia da semana</p>
+                      </div>
+                    </div>
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => navigate('/empresa-horarios')}
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      Gerenciar Horários
+                    </Button>
+                  </div>
+
+                  {/* Botão Contatos */}
+                  <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Phone className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">Contatos</h4>
+                        <p className="text-sm text-gray-600">Gerencie telefones, emails e redes sociais</p>
+                      </div>
+                    </div>
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="w-full opacity-60"
+                      disabled
+                      onClick={() => {
+                        // Futura navegação: navigate('/empresa-contatos')
+                        alert('Funcionalidade em desenvolvimento. Em breve você poderá gerenciar os contatos da empresa.');
+                      }}
+                    >
+                      <Phone className="w-4 h-4 mr-2" />
+                      Gerenciar Contatos
+                      <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                        Em breve
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Botões de Ação */}
           <div className="flex justify-end gap-4">
