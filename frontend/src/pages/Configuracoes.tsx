@@ -46,7 +46,7 @@ const mockEmpresa: TypeEmpresa = {
 
 const Configuracoes = () => {
   const navigate = useNavigate();
-  
+
   const [empresa, setEmpresa] = useState<TypeEmpresa>({
     nome_fantasia: '',
     razao_social: '',
@@ -62,7 +62,7 @@ const Configuracoes = () => {
     complemento: '',
     ativo: true
   });
-  
+
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -86,7 +86,7 @@ const Configuracoes = () => {
       try {
         setLoading(true);
         setErro(null);
-        
+
         // Verificar se o usuário é ADMIN
         const userStr = localStorage.getItem('boxpro_user');
         if (userStr) {
@@ -102,7 +102,7 @@ const Configuracoes = () => {
 
         // Primeiro testa se o backend está rodando
         const backendOnline = await testarConexao();
-        
+
         if (!backendOnline) {
           console.warn("Backend não está disponível, usando dados mock");
           setEmpresa(mockEmpresa);
@@ -117,26 +117,26 @@ const Configuracoes = () => {
         const headers: HeadersInit = {
           'Content-Type': 'application/json'
         };
-        
+
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
 
         const response = await fetch('http://localhost:8080/api/empresa', { headers });
-        
+
         if (response.status === 404) {
           // Empresa não existe, mantém formulário vazio para criação
           setEmpresaExiste(false);
           setUsingMockData(false);
           return;
         }
-        
+
         if (!response.ok) {
           throw new Error(`Erro HTTP: ${response.status}`);
         }
-        
+
         const empresaData = await response.json();
-        
+
         // Garantir que todos os campos sejam strings em vez de null
         // E mapear corretamente camelCase (backend) para snake_case (frontend)
         const empresaLimpa = {
@@ -156,11 +156,11 @@ const Configuracoes = () => {
           ativo: empresaData.ativo !== undefined ? empresaData.ativo : true,
           id: empresaData.id
         };
-        
+
         setEmpresa(empresaLimpa);
         setEmpresaExiste(true);
         setUsingMockData(false);
-        
+
       } catch (error) {
         console.error("Erro ao carregar empresa:", error);
         // Em caso de erro, usa dados mock
@@ -178,7 +178,7 @@ const Configuracoes = () => {
 
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setSaving(true);
       setErro(null);
@@ -215,7 +215,7 @@ const Configuracoes = () => {
       const headers: HeadersInit = {
         'Content-Type': 'application/json'
       };
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -223,7 +223,7 @@ const Configuracoes = () => {
       let response;
       let url;
       let method;
-      
+
       if (empresaExiste && empresa.id) {
         // Atualizar empresa existente
         url = `http://localhost:8080/api/empresa/${empresa.id}`;
@@ -243,7 +243,7 @@ const Configuracoes = () => {
       if (response.ok) {
         const responseData = await response.json();
         const empresaSalva = responseData.empresa || responseData;
-        
+
         // Garantir que todos os campos sejam strings em vez de null
         const empresaLimpa = {
           ...empresaSalva,
@@ -262,7 +262,7 @@ const Configuracoes = () => {
           ativo: empresaSalva.ativo !== undefined ? empresaSalva.ativo : true,
           id: empresaSalva.id
         };
-        
+
         setEmpresa(empresaLimpa);
         setEmpresaExiste(true);
         setSucesso(empresaExiste ? "Empresa atualizada com sucesso!" : "Empresa criada com sucesso!");
@@ -274,7 +274,7 @@ const Configuracoes = () => {
         } catch (parseError) {
           errorData = { error: errorText };
         }
-        
+
         throw new Error(errorData.error || errorData.message || `Erro ${response.status}: ${errorText}`);
       }
     } catch (error) {
@@ -366,9 +366,9 @@ const Configuracoes = () => {
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-600" />
             <p className="text-red-800">{erro}</p>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setErro(null)}
               className="ml-auto"
             >
@@ -383,9 +383,9 @@ const Configuracoes = () => {
               <div className="w-2 h-2 bg-white rounded-full"></div>
             </div>
             <p className="text-green-800">{sucesso}</p>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setSucesso(null)}
               className="ml-auto"
             >
@@ -614,9 +614,9 @@ const Configuracoes = () => {
                         <p className="text-sm text-gray-600">Configure os horários para cada dia da semana</p>
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       type="button"
-                      variant="outline" 
+                      variant="outline"
                       className="w-full"
                       onClick={() => navigate('/empresa-horarios')}
                     >
@@ -636,21 +636,14 @@ const Configuracoes = () => {
                         <p className="text-sm text-gray-600">Gerencie telefones, emails e redes sociais</p>
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       type="button"
-                      variant="outline" 
-                      className="w-full opacity-60"
-                      disabled
-                      onClick={() => {
-                        // Futura navegação: navigate('/empresa-contatos')
-                        alert('Funcionalidade em desenvolvimento. Em breve você poderá gerenciar os contatos da empresa.');
-                      }}
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => navigate('/empresa-contatos')}
                     >
                       <Phone className="w-4 h-4 mr-2" />
                       Gerenciar Contatos
-                      <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                        Em breve
-                      </span>
                     </Button>
                   </div>
                 </div>

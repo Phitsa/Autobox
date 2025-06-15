@@ -1,6 +1,5 @@
 package com.boxpro.dto.request;
 
-import com.boxpro.entity.Funcionario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

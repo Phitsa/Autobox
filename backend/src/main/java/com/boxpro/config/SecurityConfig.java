@@ -58,87 +58,50 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // ⭐ ENDPOINTS DE AUTENTICAÇÃO - PÚBLICOS (ORDEM IMPORTA!)
+                // ⭐ ORDEM CORRIGIDA: MAIS ESPECÍFICO PRIMEIRO
+                
+                // 1. ENDPOINTS DE AUTENTICAÇÃO - PÚBLICOS
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/auth/login").permitAll()
-                .requestMatchers("/auth/register").permitAll()
-                .requestMatchers("/auth/status").permitAll()
                 
-                // ⭐ DOCUMENTAÇÃO DA API - COMPLETAMENTE PÚBLICO
-                .requestMatchers("/api/swagger-ui/**").permitAll()
-                .requestMatchers("/api/swagger-ui.html").permitAll()
-                .requestMatchers("/api/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/api-docs/**").permitAll()
-                .requestMatchers("/api/swagger-resources/**").permitAll()
-                .requestMatchers("/api/webjars/**").permitAll()
-                .requestMatchers("/api/swagger-config").permitAll()
-                .requestMatchers("/api/v3/api-docs/**").permitAll()
+                // 2. DOCUMENTAÇÃO DA API - PÚBLICO
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", 
+                               "/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                 
-                // ⭐ ENDPOINTS PÚBLICOS GERAIS
-                .requestMatchers("/test/public").permitAll()
+                // 3. RECURSOS ESTÁTICOS E BÁSICOS
+                .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico").permitAll()
                 .requestMatchers("/public/**").permitAll()
-                .requestMatchers("/").permitAll()
-                .requestMatchers("/index.html").permitAll()
-                .requestMatchers("/static/**").permitAll()
-                .requestMatchers("/favicon.ico").permitAll()
                 
-                // ⭐ MONITORAMENTO
-                .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/actuator/info").permitAll()
+                // 4. MONITORAMENTO E DEBUG
                 .requestMatchers("/actuator/**").permitAll()
-                
-                // ⭐ H2 CONSOLE (apenas para desenvolvimento)
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/test/**").permitAll()
                 
-                // ⭐ ROTAS ESPECÍFICAS POR MÉTODO HTTP E ROLE
+                // 🎯 5. EMPRESA CONTATOS - ENDPOINTS ESPECÍFICOS PRIMEIRO
+                .requestMatchers("/api/empresa-contatos/status").permitAll()
+                .requestMatchers("/api/empresa-contatos/tipos").permitAll()
+                .requestMatchers("/api/empresa-contatos/empresa/**").permitAll()
+                .requestMatchers("/api/empresa-contatos/**").permitAll()
                 
-                // GET público para listagem básica
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/clientes").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/servicos").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/empresa").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/empresa-horarios").permitAll()
-
-                // POST, PUT, DELETE para ADMIN e FUNCIONARIO
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/clientes/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/clientes/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/clientes/**").permitAll()
+                // 🎯 6. EMPRESA - ENDPOINTS ESPECÍFICOS
+                .requestMatchers("/api/empresa/status").permitAll()
+                .requestMatchers("/api/empresa/**").permitAll()
                 
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/categorias/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/categorias/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/categorias/**").permitAll()
-                
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/servicos/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/servicos/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/servicos/**").permitAll()
-                
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/empresa/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/empresa/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/empresa/**").permitAll()
-
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/empresa-horarios/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/empresa-horarios/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/empresa-horarios/**").permitAll()
-
-                // ⭐ FALLBACK: Qualquer outro endpoint dessas APIs requer ADMIN ou FUNCIONARIO
+                // 🎯 7. OUTROS ENDPOINTS DA API - PÚBLICOS DURANTE DESENVOLVIMENTO
+                .requestMatchers("/api/empresa-horarios/**").permitAll()
                 .requestMatchers("/api/clientes/**").permitAll()
                 .requestMatchers("/api/categorias/**").permitAll()
                 .requestMatchers("/api/servicos/**").permitAll()
-                .requestMatchers("/api/empresa/**").permitAll()
-                .requestMatchers("/api/empresa-horarios/**").permitAll()
-
-                // ⭐ ENDPOINTS DE FUNCIONÁRIOS - APENAS PARA ADMIN
                 .requestMatchers("/api/funcionarios/**").permitAll()
-                
-                // ⭐ ENDPOINTS ADMINISTRATIVOS - APENAS PARA ADMINS
                 .requestMatchers("/api/admin/**").permitAll()
                 
-                // ⭐ TODOS OS OUTROS ENDPOINTS REQUEREM AUTENTICAÇÃO
+                // 8. FALLBACK: Qualquer outra rota da API
+                .requestMatchers("/api/**").permitAll()
+                
+                // 9. ÚLTIMO: Todos os outros endpoints requerem autenticação
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            // ⭐ CORS e Headers
             .headers(headers -> headers
                 .frameOptions().sameOrigin()
                 .contentTypeOptions().and()
@@ -152,12 +115,24 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // ⭐ CORS mais permissivo para desenvolvimento
+        // 🔧 CORS OTIMIZADO PARA DESENVOLVIMENTO
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000"));
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:3000", 
+            "http://127.0.0.1:3000",
+            "http://localhost:8080",
+            "http://127.0.0.1:8080"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "Access-Control-Allow-Origin"));
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization", 
+            "Cache-Control", 
+            "Content-Type", 
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Headers",
+            "Access-Control-Allow-Methods"
+        ));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
