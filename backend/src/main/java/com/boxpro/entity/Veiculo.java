@@ -12,6 +12,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "veiculos")
@@ -21,13 +24,21 @@ public class Veiculo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
     private String marca;
+
+    @NotBlank
     private String modelo;
+
+    @NotNull
     private int ano;
 
+    @NotBlank
+    @Size(min = 7,max = 7)
     @Column(unique = true)
     private String placa;
 
+    @NotBlank
     private String cor;
 
     @ManyToOne
