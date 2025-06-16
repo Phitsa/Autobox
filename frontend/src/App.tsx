@@ -19,6 +19,7 @@ import EmpresaHorarios from "./pages/EmpresaHorarios";
 import Veiculos from "./pages/Veiculos";
 import EmpresaContatos from "./pages/EmpresaContatos";
 import Agendamentos from "./pages/Agendamentos";
+import HistoricoAgendamentos from "./pages/HistoricoAgendamentos";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +117,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Agendamentos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/historico-agendamentos"
+          element={
+            <ProtectedRoute>
+              <HistoricoAgendamentos />
             </ProtectedRoute>
           }
         />

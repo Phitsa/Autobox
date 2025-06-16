@@ -11,6 +11,7 @@ import {
   Plus,
   DollarSign,
   Clock,
+  History,
   CheckCircle,
   Lock
 } from 'lucide-react';
@@ -38,6 +39,14 @@ const AdminDashboard = () => {
     } else {
       // Apenas mostrar que não tem acesso, mas não navegar
       alert('Acesso restrito! Apenas administradores podem gerenciar funcionários.');
+    }
+  };
+  const handleHistoricoClick = () => {
+    if (isAdmin) {
+      navigate('/historico-agendamentos');
+    } else {
+      // Apenas mostrar que não tem acesso, mas não navegar
+      alert('Acesso restrito! Apenas administradores podem visualizar histórico de agendamentos.');
     }
   };
 
@@ -124,7 +133,7 @@ const AdminDashboard = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Calendar className="w-6 h-6 text-blue-600" />
                 </div>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={() => navigate('/agendamentos')}>
                   Acessar
                 </Button>
               </div>
@@ -158,16 +167,16 @@ const AdminDashboard = () => {
           {/* Card de Funcionários - Com Restrição */}
           <div
             className={`rounded-lg shadow-md transition-shadow cursor-pointer ${isAdmin
-                ? 'bg-white hover:shadow-lg'
-                : 'bg-gray-100 opacity-75'
+              ? 'bg-white hover:shadow-lg'
+              : 'bg-gray-100 opacity-75'
               }`}
             onClick={handleFuncionariosClick}
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isAdmin
-                    ? 'bg-orange-100'
-                    : 'bg-gray-200'
+                  ? 'bg-orange-100'
+                  : 'bg-gray-200'
                   }`}>
                   {isAdmin ? (
                     <Users className="w-6 h-6 text-orange-600" />
@@ -209,16 +218,16 @@ const AdminDashboard = () => {
           {/* Card de Configurações - Com Restrição ADMIN */}
           <div
             className={`rounded-lg shadow-md transition-shadow cursor-pointer ${isAdmin
-                ? 'bg-white hover:shadow-lg'
-                : 'bg-gray-100 opacity-75'
+              ? 'bg-white hover:shadow-lg'
+              : 'bg-gray-100 opacity-75'
               }`}
             onClick={handleConfiguracoesClick}
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isAdmin
-                    ? 'bg-gray-100'
-                    : 'bg-gray-200'
+                  ? 'bg-gray-100'
+                  : 'bg-gray-200'
                   }`}>
                   {isAdmin ? (
                     <Settings className="w-6 h-6 text-gray-600" />
@@ -260,26 +269,26 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => navigate('/agendamentos')}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Agendamento
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => navigate('/clientes')}>
               <Users className="w-4 h-4 mr-2" />
               Cadastrar Cliente
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => navigate('/servicos')}>
               <Car className="w-4 h-4 mr-2" />
               Adicionar Serviço
             </Button>
             <Button
               variant="outline"
               disabled={!isAdmin}
-              onClick={handleFuncionariosClick}
+              onClick={handleHistoricoClick}
               className={!isAdmin ? 'opacity-60' : ''}
             >
-              <Users className="w-4 h-4 mr-2" />
-              {isAdmin ? 'Gerenciar Funcionários' : 'Funcionários (Restrito)'}
+              <History className="w-4 h-4 mr-2" />
+              {isAdmin ? 'Histórico Agendamentos' : 'Histórico Agendamentos (Restrito)'}
             </Button>
           </div>
         </div>
