@@ -18,6 +18,7 @@ import Configuracoes from "./pages/Configuracoes";
 import EmpresaHorarios from "./pages/EmpresaHorarios";
 import Veiculos from "./pages/Veiculos";
 import EmpresaContatos from "./pages/EmpresaContatos";
+import Agendamentos from "./pages/Agendamentos";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <EmpresaContatos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agendamentos"
+          element={
+            <ProtectedRoute>
+              <Agendamentos />
             </ProtectedRoute>
           }
         />
