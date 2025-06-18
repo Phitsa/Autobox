@@ -1,38 +1,225 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut } from "lucide-react";
+import {
+  CalendarClock,
+  Phone,
+  MessageCircle,
+  Clock,
+  MapPin,
+  Menu,
+  X,
+  LogOut
+} from "lucide-react";
 import LoginRegisterModal from "./LoginRegisterModal";
 import { useAuth } from "@/hooks/useAuth";
 import { User } from "@/types/auth";
 
+interface EmpresaContato {
+  id?: number;
+  empresaId: number;
+  tipoContato: TipoContato;
+  nomeTipoContato?: string;
+  valor: string;
+  valorFormatado?: string;
+  descricao?: string;
+  principal: boolean;
+  ativo: boolean;
+}
+
+interface Empresa {
+  id: number;
+  nomeFantasia: string;
+  razaoSocial?: string;
+  endereco?: string;
+}
+
+enum TipoContato {
+  TELEFONE = "telefone",
+  CELULAR = "celular",
+  WHATSAPP = "whatsapp",
+  EMAIL = "email",
+  FAX = "fax"
+}
+
+const mockEmpresa: Empresa = {
+  id: 1,
+  nomeFantasia: "Auto Box",
+  razaoSocial: "Auto Box Estética Automotiva Ltda",
+  endereco: "Mossoró - RN"
+};
+
+const mockContatos: EmpresaContato[] = [
+  {
+    id: 1,
+    empresaId: 1,
+    tipoContato: TipoContato.TELEFONE,
+    valor: "8433334444",
+    valorFormatado: "(84) 3333-4444",
+    descricao: "Comercial",
+    principal: true,
+    ativo: true
+  },
+  {
+    id: 2,
+    empresaId: 1,
+    tipoContato: TipoContato.WHATSAPP,
+    valor: "84999887766",
+    valorFormatado: "(84) 99988-7766",
+    descricao: "Agendamentos",
+    principal: true,
+    ativo: true
+  }
+];
+
 const Navbar = () => {
+  const [empresa, setEmpresa] = useState<Empresa | null>(null);
+  const [contatos, setContatos] = useState<EmpresaContato[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [usingMockData, setUsingMockData] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
   const { user, isAuthenticated, login, logout } = useAuth();
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleLoginSuccess = (userData: User) => {
     login(userData);
     setShowLoginModal(false);
-    // Redirecionar para o dashboard admin
-    window.location.href = '/admin';
+    window.location.href = "/admin";
   };
 
-  const handleLogout = () => {
-    logout();
-  };
+  const handleLogout = () => logout();
 
   const handleAdminAccess = () => {
     if (isAuthenticated) {
-      // Se já está logado, vai direto para o admin
-      window.location.href = '/admin';
+      window.location.href = "/admin";
     } else {
-      // Se não está logado, abre o modal
       setShowLoginModal(true);
     }
+  };
+
+  const horariosFuncionamento = [
+    { dias: "Segunda - Sexta", horario: "8:00 - 19:00" },
+    { dias: "Sábado", horario: "8:00 - 17:00" },
+    { dias: "Domingo", horario: "9:00 - 14:00" }
+  ];
+
+  const testarConexao = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/empresa-contatos/status");
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        setLoading(true);
+        const backendOnline = await testarConexao();
+
+        if (!backendOnline) {
+          setEmpresa(mockEmpresa);
+          setContatos(mockContatos);
+          setUsingMockData(true);
+          return;
+        }
+
+        const headers = {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        };
+
+        const empresaResponse = await fetch("http://localhost:8080/api/empresa/1", {
+          method: "GET",
+          headers
+        });
+
+        let empresaData;
+        if (empresaResponse.ok) {
+          empresaData = await empresaResponse.json();
+        } else {
+          empresaData = mockEmpresa;
+        }
+
+        const empresaInfo: Empresa = {
+          id: empresaData.id || 1,
+          nomeFantasia:
+            empresaData.nomeFantasia ||
+            empresaData.nome_fantasia ||
+            empresaData.razao_social ||
+            "Auto Box",
+          razaoSocial: empresaData.razaoSocial || empresaData.razao_social,
+          endereco: empresaData.endereco || "Mossoró - RN"
+        };
+        setEmpresa(empresaInfo);
+
+        const contatosResponse = await fetch(
+          `http://localhost:8080/api/empresa-contatos/empresa/${empresaInfo.id}`,
+          {
+            method: "GET",
+            headers
+          }
+        );
+
+        if (contatosResponse.ok) {
+          const contatosData = await contatosResponse.json();
+          setContatos(contatosData || []);
+          setUsingMockData(false);
+        } else {
+          setContatos([]);
+        }
+      } catch (error) {
+        console.error("Erro geral:", error);
+        setEmpresa(mockEmpresa);
+        setContatos(mockContatos);
+        setUsingMockData(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarDados();
+  }, []);
+
+  const gerarLinkWhatsApp = () => {
+    const whatsappContato = contatos.find(
+      (c) => c.tipoContato === TipoContato.WHATSAPP && c.ativo
+    );
+
+    const contato = whatsappContato || contatos.find(
+      (c) => (c.tipoContato === TipoContato.CELULAR || c.tipoContato === TipoContato.TELEFONE) && c.ativo
+    );
+
+    if (!contato) {
+      alert("Número do WhatsApp não encontrado.");
+      return;
+    }
+
+    const numeroLimpo = contato.valor.replace(/\D/g, "");
+    const numeroFormatado = numeroLimpo.startsWith("55")
+      ? numeroLimpo
+      : `55${numeroLimpo}`;
+    const mensagem = encodeURIComponent(
+      `Olá! Gostaria de agendar um serviço na ${empresa?.nomeFantasia || "Auto Box"}.`
+    );
+
+    window.open(`https://wa.me/${numeroFormatado}?text=${mensagem}`, "_blank");
+  };
+
+  const ligar = () => {
+    const telefoneContato = contatos.find(
+      (c) => (c.tipoContato === TipoContato.TELEFONE || c.tipoContato === TipoContato.CELULAR) && c.ativo
+    );
+
+    if (!telefoneContato) {
+      alert("Número de telefone não encontrado.");
+      return;
+    }
+
+    window.open(`tel:${telefoneContato.valor}`);
   };
 
   return (
@@ -54,14 +241,10 @@ const Navbar = () => {
             </div>
 
             <div className="hidden md:block">
-              <Button 
-                onClick={handleAdminAccess}
-                className="bg-carwash-blue hover:bg-blue-600 text-white mr-2"
-              >
+              <Button onClick={handleAdminAccess} className="bg-carwash-blue hover:bg-blue-600 text-white mr-2">
                 Menu Admin
               </Button>
-              
-              <Button className="bg-carwash-orange hover:bg-orange-600 text-white">
+              <Button onClick={gerarLinkWhatsApp} className="bg-carwash-orange hover:bg-orange-600 text-white">
                 Agendar Agora
               </Button>
             </div>
@@ -81,25 +264,15 @@ const Navbar = () => {
                 <a href="#como-funciona" className="text-gray-600 hover:text-carwash-blue transition-colors">Como Funciona</a>
                 <a href="#sobre" className="text-gray-600 hover:text-carwash-blue transition-colors">Sobre</a>
                 <a href="#contato" className="text-gray-600 hover:text-carwash-blue transition-colors">Contato</a>
-                
-                <Button 
-                  onClick={handleAdminAccess}
-                  className="bg-carwash-blue hover:bg-blue-600 text-white w-full"
-                >
-                  Menu Admin
-                </Button>
-                
-                <Button className="bg-carwash-orange hover:bg-orange-600 text-white w-full">
-                  Agendar Agora
-                </Button>
+                <Button onClick={handleAdminAccess} className="bg-carwash-blue hover:bg-blue-600 text-white w-full">Menu Admin</Button>
+                <Button onClick={gerarLinkWhatsApp} className="bg-carwash-orange hover:bg-orange-600 text-white w-full">Agendar Agora</Button>
               </div>
             </div>
           )}
         </div>
       </nav>
 
-      {/* Modal de Login/Registro */}
-      <LoginRegisterModal 
+      <LoginRegisterModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onLoginSuccess={handleLoginSuccess}
