@@ -89,13 +89,6 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({ onSubmit, initialData
     if (!formData.dataAgendamento) newErrors.dataAgendamento = 'Data é obrigatória';
     if (!formData.horaInicio) newErrors.horaInicio = 'Hora de início é obrigatória';
     
-    // Validar se a data não é no passado
-    const hoje = new Date();
-    const dataAgendamento = new Date(formData.dataAgendamento);
-    if (dataAgendamento < new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())) {
-      newErrors.dataAgendamento = 'Não é possível agendar para datas passadas';
-    }
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
